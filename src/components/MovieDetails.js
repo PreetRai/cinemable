@@ -59,7 +59,7 @@ const MovieDetails = () => {
               </div>
               <h1 className="text-3xl md:text-5xl font-bold mb-2">{movie.Title}</h1>
               <div className="text-xl md:text-2xl opacity-75">
-                {movie.Year.includes("–") ? `${movie.Year} (Ongoing)` : movie.Year}
+                {movie.Year}
               </div>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
