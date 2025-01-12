@@ -28,7 +28,7 @@ jobs:
           REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
           REACT_APP_FIREBASE_APP_ID: ${{ secrets.REACT_APP_FIREBASE_APP_ID }}
           REACT_APP_FIREBASE_MEASUREMENT_ID: ${{ secrets.REACT_APP_FIREBASE_MEASUREMENT_ID }}
-          REACT_APP_OMDb_API: ${{ secrets.REACT_APP_OMDb_API }}
+          REACT_APP_OMDB_API: ${{ secrets.REACT_APP_OMDB_API }}
         run: npm run build
 
       - name: Deploy to Firebase
