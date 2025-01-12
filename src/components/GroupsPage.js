@@ -210,7 +210,36 @@ useEffect(() => {
     <div className="min-h-screen bg-[#353535] text-white">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">My Groups</h1>
+      <div className="flex flex-row justify-between items-center mb-8 gap-4">
+  <h1 className="text-4xl font-bold">My Groups</h1>
+  
+  <div className="flex flex-row gap-3">
+    <button
+      onClick={() => setShowCreateModal(true)}
+      className="bg-[#1a1a1a] px-4 py-3 rounded-lg hover:bg-[#2a2a2a] 
+                 transition-all duration-300 flex items-center justify-center gap-2"
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+              d="M12 4v16m8-8H4" />
+      </svg>
+      <span className="font-semibold">Create Group</span>
+    </button>
+
+    <button
+      onClick={() => setShowJoinModal(true)}
+      className="bg-blue-600 px-4 py-3 rounded-lg hover:bg-blue-700 
+                 transition-all duration-300 flex items-center justify-center gap-2"
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+      </svg>
+      <span className="font-semibold">Join Group</span>
+    </button>
+  </div>
+</div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {groups.map(group => (
   <div key={group.id} 
@@ -293,28 +322,7 @@ useEffect(() => {
 ))}
 
           
-          <div 
-            onClick={() => setShowCreateModal(true)}
-            className="bg-[#1a1a1a] p-6 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#2a2a2a] hover:scale-105 transition-all duration-300"
-          >
-            <span className="text-2xl font-bold flex items-center gap-2">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              Create Group
-            </span>
-          </div>
-          <div 
-    onClick={() => setShowJoinModal(true)}
-    className="bg-[#1a1a1a] p-6 rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#2a2a2a] hover:scale-105 transition-all duration-300"
-  >
-    <span className="text-2xl font-bold flex items-center gap-2">
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-      </svg>
-      Join Group
-    </span>
-  </div>
+         
         </div>
       </div>
 {/* Join Group Modal */}
