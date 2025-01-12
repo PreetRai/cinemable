@@ -3,6 +3,7 @@ import axios from 'axios';
 export const searchMultipleMovies = async (searchTerm, options = {}) => {
   const { type, year, page = 1 } = options;
   const params = new URLSearchParams({
+    apikey: process.env.REACT_APP_OMDB_API,
     s: searchTerm,
     page: page.toString()
   });
