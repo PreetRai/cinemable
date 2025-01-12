@@ -1,10 +1,8 @@
 import axios from 'axios';
-
 // Add a new function for searching multiple movies
 export const searchMultipleMovies = async (searchTerm, options = {}) => {
   const { type, year, page = 1 } = options;
   const params = new URLSearchParams({
-    apikey: process.env.REACT_APP_OMDb_API,
     s: searchTerm,
     page: page.toString()
   });
@@ -13,12 +11,13 @@ export const searchMultipleMovies = async (searchTerm, options = {}) => {
   if (year) params.append('y', year);
 
   const response = await fetch(`https://www.omdbapi.com/?${params}`);
+  console.log(`https://www.omdbapi.com/?${params}`)
   return response.json();
 };
 
 export const getMovieById = async (imdbId) => {
   const params = new URLSearchParams({
-    apikey: process.env.REACT_APP_OMDb_API,
+    apikey: process.env.REACT_APP_OMDB_API,
     i:imdbId,
     plot:'full'
   });
