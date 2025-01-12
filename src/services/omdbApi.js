@@ -12,7 +12,6 @@ export const searchMultipleMovies = async (searchTerm, options = {}) => {
   if (year) params.append('y', year);
 
   const response = await fetch(`https://www.omdbapi.com/?${params}`);
-  console.log(`https://www.omdbapi.com/?${params}`)
   return response.json();
 };
 
