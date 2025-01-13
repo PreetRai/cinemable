@@ -64,13 +64,17 @@ const MovieCard = ({ movie, recommendedBy }) => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
       </div>
-      
+      <div className="absolute top-0 left-0 right-0 p-6">
+      <div className="flex justify-end items-center mb-2">
+      {renderRecommenders()}
+      </div>
+      </div>
       <div className="absolute bottom-0 left-0 right-0 p-6">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm uppercase tracking-wider opacity-75">
             {movie.Type}
           </span>
-          {renderRecommenders()}
+          
         </div>
         <h2 className="text-2xl font-bold mb-2 line-clamp-2">{movie.Title}</h2>
         <div className="flex items-center justify-between">

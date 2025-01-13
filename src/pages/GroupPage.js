@@ -13,21 +13,10 @@ const GroupPage = () => {
     const [memberDetails, setMemberDetails] = useState({});
     const [selectedGenre, setSelectedGenre] = useState('all');
     const [genres, setGenres] = useState([]);
-    const [selectedUser, setSelectedUser] = useState('all');
-    const getFilteredRecommendations = () => {
-      return recommendations.filter(rec => {
-        const matchesUser = selectedUser === 'all' || 
-          rec.recommenders.includes(selectedUser);
-            
-        const matchesGenre = selectedGenre === 'all' || 
-          rec.movie.genre.includes(selectedGenre);
-            
-        return matchesUser && matchesGenre;
-      });
-    };
-    
-      
+    const [showUserFilter, setShowUserFilter] = useState(false);
+    const [selectedUsers, setSelectedUsers] = useState([]);
 
+    
     useEffect(() => {
       const fetchData = async () => {
         try {
@@ -77,7 +66,6 @@ const GroupPage = () => {
           });
           
           const recs = Object.values(movieRecommendations);
-          console.log(recs)
           setRecommendations(recs);
     
           // Process genres
@@ -97,6 +85,43 @@ const GroupPage = () => {
     
       fetchData();
     }, [groupId]);
+    const getFilteredRecommendations = () => {
+      
+      // Helper function for genre matching
+      const matchesGenre = (rec) => 
+        selectedGenre === 'all' || rec.movie.genre.includes(selectedGenre);
+      if (selectedUsers.length === 0) {
+        return recommendations.filter(rec => 
+          matchesGenre(rec)
+        );
+      }
+    
+    
+      // Separate recommendations into groups
+      const combinedRecs = [];
+      const individualRecs = [];
+    
+      recommendations.forEach(rec => {
+        if (!matchesGenre(rec)) return;
+    
+        // Check if all selected users have recommended this movie
+        const hasAllSelectedUsers = selectedUsers.every(userId =>
+          rec.recommendedBy.includes(userId)
+        );
+    
+        if (hasAllSelectedUsers) {
+          combinedRecs.push(rec);
+        } else if (rec.recommendedBy.some(userId => selectedUsers.includes(userId))) {
+          individualRecs.push(rec);
+        }
+      });
+    
+      // Return combined array with shared recommendations first
+      return [...combinedRecs, ...individualRecs];
+    };
+    
+    
+    
   if (loading) {
     return (
       <div className="min-h-screen bg-[#353535] text-white">
@@ -151,23 +176,53 @@ const GroupPage = () => {
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
           <h2 className="text-xl md:text-2xl font-bold">Recommended Movies</h2>
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full md:w-auto">
-            <select
-              value={selectedUser}
-              onChange={(e) => setSelectedUser(e.target.value)}
-              className="w-full sm:w-auto bg-[#1a1a1a] text-white px-3 py-2 md:px-4 md:py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-sm md:text-base"
-            >
-              <option value="all">All Recommendations</option>
-              {Object.entries(memberDetails)
-                .filter(([userId]) => 
-                  recommendations.some(rec => rec.recommenders.includes(userId))
-                )
-                .map(([userId, user]) => (
-                  <option key={userId} value={userId}>
-                    {user.name}
-                  </option>
-                ))
-              }
-            </select>
+          <div className="relative">
+  <button
+    onClick={() => setShowUserFilter(!showUserFilter)}
+    className="w-full sm:w-auto bg-[#1a1a1a] text-white px-3 py-2 md:px-4 md:py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-sm md:text-base flex items-center justify-between"
+  >
+    <span>
+      {selectedUsers.length === 0 
+        ? 'All Recommendations' 
+        : `${selectedUsers.length} Selected`}
+    </span>
+    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
+
+  {showUserFilter && (
+    <div className="absolute z-50 mt-2 w-full bg-[#1a1a1a] rounded-lg shadow-xl border border-gray-700">
+      <div className="p-2">
+      {Object.entries(memberDetails)
+  .filter(([userId]) => 
+    recommendations.some(rec => 
+      rec.recommendedBy && rec.recommendedBy.includes(userId)
+    )
+  )
+  .map(([userId, user]) => (
+    <label key={userId} className="flex items-center p-2 hover:bg-[#2a2a2a] rounded">
+      <input
+        type="checkbox"
+        checked={selectedUsers.includes(userId)}
+        onChange={() => {
+          setSelectedUsers(prev => 
+            prev.includes(userId)
+              ? prev.filter(id => id !== userId)
+              : [...prev, userId]
+          );
+        }}
+        className="mr-2"
+      />
+      <span className="text-sm">{user.name}</span>
+    </label>
+  ))
+}
+
+      </div>
+    </div>
+  )}
+</div>
 
             <select
               value={selectedGenre}
@@ -196,7 +251,7 @@ const GroupPage = () => {
      Year: rec.movie.year
    }}
    recommendedBy={rec.recommendedBy.map(userId => {
-     const member = memberDetails[userId].name;
+     const member = memberDetails[userId]?.name;
      return member;
    }).filter(Boolean)}
  />
