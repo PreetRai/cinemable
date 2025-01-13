@@ -15,19 +15,17 @@ const GroupPage = () => {
     const [genres, setGenres] = useState([]);
     const [selectedUser, setSelectedUser] = useState('all');
     const getFilteredRecommendations = () => {
-        return recommendations.filter(rec => {
-          // Check if recommendedBy is an array
-          const matchesUser = selectedUser === 'all' || 
-            (Array.isArray(rec.recommendedBy) 
-              ? rec.recommendedBy.includes(selectedUser)
-              : rec.recommendedBy === selectedUser);
-              
-          const matchesGenre = selectedGenre === 'all' || 
-            rec.movie.genre.includes(selectedGenre);
+      return recommendations.filter(rec => {
+        const matchesUser = selectedUser === 'all' || 
+          rec.recommenders.includes(selectedUser);
             
-          return matchesUser && matchesGenre;
-        });
-      };
+        const matchesGenre = selectedGenre === 'all' || 
+          rec.movie.genre.includes(selectedGenre);
+            
+        return matchesUser && matchesGenre;
+      });
+    };
+    
       
 
     useEffect(() => {
@@ -36,6 +34,7 @@ const GroupPage = () => {
           // Fetch group details
           const groupRef = doc(db, 'groups', groupId);
           const groupDoc = await getDoc(groupRef);
+          
           if (groupDoc.exists()) {
             setGroupDetails(groupDoc.data());
             
@@ -63,28 +62,41 @@ const GroupPage = () => {
           const q = query(recommendationsRef, where('groupId', '==', groupId));
           const querySnapshot = await getDocs(q);
           
-          const recs = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
+          // Group recommendations by movieId
+          const movieRecommendations = {};
+          querySnapshot.docs.forEach(doc => {
+            const rec = { id: doc.id, ...doc.data() };
+            if (!movieRecommendations[rec.movieId]) {
+              movieRecommendations[rec.movieId] = {
+                ...rec,
+                recommenders: [rec.recommendedBy]
+              };
+            } else {
+              movieRecommendations[rec.movieId].recommenders.push(rec.recommendedBy);
+            }
+          });
           
+          const recs = Object.values(movieRecommendations);
+          console.log(recs)
           setRecommendations(recs);
+    
+          // Process genres
           const uniqueGenres = new Set();
-        recs.forEach(rec => {
-          rec.movie.genre.split(',').forEach(genre => 
-            uniqueGenres.add(genre.trim())
-          );
-        });
-        setGenres(['all', ...Array.from(uniqueGenres)]);
-        
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [groupId]);
+          recs.forEach(rec => {
+            rec.movie.genre.split(',').forEach(genre => 
+              uniqueGenres.add(genre.trim())
+            );
+          });
+          setGenres(['all', ...Array.from(uniqueGenres)]);
+          
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+        setLoading(false);
+      };
+    
+      fetchData();
+    }, [groupId]);
   if (loading) {
     return (
       <div className="min-h-screen bg-[#353535] text-white">
@@ -147,7 +159,7 @@ const GroupPage = () => {
               <option value="all">All Recommendations</option>
               {Object.entries(memberDetails)
                 .filter(([userId]) => 
-                  recommendations.some(rec => rec.recommendedBy === userId)
+                  recommendations.some(rec => rec.recommenders.includes(userId))
                 )
                 .map(([userId, user]) => (
                   <option key={userId} value={userId}>
@@ -173,19 +185,27 @@ const GroupPage = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-          {getFilteredRecommendations().map(rec => (
-            <MovieCard
-              key={rec.id}
-              movie={{
-                imdbID: rec.movieId,
-                Title: rec.movie.title,
-                Poster: rec.movie.poster,
-                Type: rec.movie.type,
-                Year: rec.movie.year
-              }}
-            />
-          ))}
-        </div>
+  {getFilteredRecommendations().map(rec => (
+   <MovieCard
+   key={rec.id}
+   movie={{
+     imdbID: rec.movieId,
+     Title: rec.movie.title,
+     Poster: rec.movie.poster,
+     Type: rec.movie.type,
+     Year: rec.movie.year
+   }}
+   recommendedBy={rec.recommendedBy.map(userId => {
+     const member = memberDetails[userId].name;
+     return member;
+   }).filter(Boolean)}
+ />
+ 
+  ))}
+</div>
+
+
+
 
         {getFilteredRecommendations().length === 0 && (
           <div className="text-center text-lg md:text-xl opacity-75 mt-8 md:mt-12">
