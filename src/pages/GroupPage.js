@@ -85,41 +85,30 @@ const GroupPage = () => {
     
       fetchData();
     }, [groupId]);
-    const getFilteredRecommendations = () => {
-      
-      // Helper function for genre matching
-      const matchesGenre = (rec) => 
-        selectedGenre === 'all' || rec.movie.genre.includes(selectedGenre);
-      if (selectedUsers.length === 0) {
-        return recommendations.filter(rec => 
-          matchesGenre(rec)
-        );
-      }
+
+   const getFilteredRecommendations = () => {
+    const matchesGenre = (rec) => 
+      selectedGenre === 'all' || rec.movie.genre.includes(selectedGenre);
+
+    if (selectedUsers.length === 0) {
+      return {
+        combined: [],
+        individual: recommendations.filter(rec => matchesGenre(rec))
+      };
+    }
+
+    const filtered = recommendations.filter(rec => matchesGenre(rec));
     
-    
-      // Separate recommendations into groups
-      const combinedRecs = [];
-      const individualRecs = [];
-    
-      recommendations.forEach(rec => {
-        if (!matchesGenre(rec)) return;
-    
-        // Check if all selected users have recommended this movie
-        const hasAllSelectedUsers = selectedUsers.every(userId =>
-          rec.recommendedBy.includes(userId)
-        );
-    
-        if (hasAllSelectedUsers) {
-          combinedRecs.push(rec);
-        } else if (rec.recommendedBy.some(userId => selectedUsers.includes(userId))) {
-          individualRecs.push(rec);
-        }
-      });
-    
-      // Return combined array with shared recommendations first
-      return [...combinedRecs, ...individualRecs];
+    return {
+      combined: filtered.filter(rec => 
+        selectedUsers.every(userId => rec.recommendedBy.includes(userId))
+      ),
+      individual: filtered.filter(rec => 
+        selectedUsers.some(userId => rec.recommendedBy.includes(userId)) &&
+        !selectedUsers.every(userId => rec.recommendedBy.includes(userId))
+      )
     };
-    
+  };
     
     
   if (loading) {
@@ -132,6 +121,9 @@ const GroupPage = () => {
       </div>
     );
   }
+
+  const filteredRecs = getFilteredRecommendations();
+
   return (
     <div className="min-h-screen bg-[#353535] text-white">
       <Navbar />
@@ -239,37 +231,69 @@ const GroupPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-  {getFilteredRecommendations().map(rec => (
-   <MovieCard
-   key={rec.id}
-   movie={{
-     imdbID: rec.movieId,
-     Title: rec.movie.title,
-     Poster: rec.movie.poster,
-     Type: rec.movie.type,
-     Year: rec.movie.year
-   }}
-   recommendedBy={rec.recommendedBy.map(userId => {
-     const member = memberDetails[userId]?.name;
-     return member;
-   }).filter(Boolean)}
- />
- 
-  ))}
-</div>
+        <div className="space-y-8">
+          {filteredRecs.combined.length > 0 && (
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Shared Recommendations</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredRecs.combined.map(rec => (
+                  <MovieCard
+                    key={rec.id}
+                    movie={{
+                      imdbID: rec.movieId,
+                      Title: rec.movie.title,
+                      Poster: rec.movie.poster,
+                      Type: rec.movie.type,
+                      Year: rec.movie.year
+                    }}
+                    recommendedBy={rec.recommendedBy.map(userId => 
+                      memberDetails[userId]?.name
+                    ).filter(Boolean)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
+          {filteredRecs.individual.length > 0 && (
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Individual Recommendations</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {filteredRecs.individual.map(rec => (
+                  <MovieCard
+                    key={rec.id}
+                    movie={{
+                      imdbID: rec.movieId,
+                      Title: rec.movie.title,
+                      Poster: rec.movie.poster,
+                      Type: rec.movie.type,
+                      Year: rec.movie.year
+                    }}
+                    recommendedBy={rec.recommendedBy.map(userId => 
+                      memberDetails[userId]?.name
+                    ).filter(Boolean)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-
-
-        {getFilteredRecommendations().length === 0 && (
-          <div className="text-center text-lg md:text-xl opacity-75 mt-8 md:mt-12">
-            No movies found with selected filters
-          </div>
-        )}
+          {filteredRecs.combined.length === 0 && filteredRecs.individual.length === 0 && (
+            <div className="text-center text-lg md:text-xl opacity-75 mt-8">
+              No movies found with selected filters
+            </div>
+          )}
+        </div>
       </div>
       
     </div>
   );
 };
 export default GroupPage;
+
+
+
+
+
+
+
