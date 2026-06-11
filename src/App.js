@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Wishlist from './components/Wishlist';
 import GroupsPage from './components/GroupsPage';
 import GroupPage from './pages/GroupPage';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           />
           <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
           <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/group/:groupId" element={<GroupPage />} />
 
         </Routes>
