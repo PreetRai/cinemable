@@ -24,11 +24,6 @@ const normalizePosterUrl = (poster) => {
   return normalizedPoster;
 };
 
-const formatDisplayValue = (value, fallback = 'N/A') => {
-  if (!value || value === 'N/A') return fallback;
-  return value;
-};
-
 const splitList = (value) => {
   if (!value || value === 'N/A') return [];
   return value

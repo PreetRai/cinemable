@@ -672,6 +672,7 @@ const MovieDetails = () => {
     return () => {
       isMounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movie?.imdbID, movie?.Type]);
 
   const handleSubmitReview = async () => {
