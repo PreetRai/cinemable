@@ -20,13 +20,6 @@ const MovieDetails = () => {
         : runtime;
     };
 
-    const detailChips = [
-      movie?.Rated,
-      formatRuntime(movie?.Runtime),
-      movie?.Country,
-      movie?.Language,
-    ].filter((value) => value && value !== 'N/A');
-
     useEffect(() => {
         const fetchMovieDetails = async () => {
             const result = await getMovieById(id);

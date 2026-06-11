@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchMultipleMovies } from "../services/omdbApi";
 import Navbar from "../components/Navbar";
