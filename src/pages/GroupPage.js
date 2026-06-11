@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { collection, query, where, getDocs,doc,getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import Navbar from '../components/Navbar';
 import MovieCard from '../components/MovieCard';
@@ -113,10 +113,13 @@ const GroupPage = () => {
     
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#353535] text-white">
+      <div className="min-h-screen bg-[#141414] text-white">
         <Navbar />
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-2xl">Loading...</div>
+        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
+          <div className="rounded-3xl border border-white/5 bg-[#1a1a1a] px-6 py-5 shadow-2xl">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#e50914]" />
+            <p className="mt-3 text-sm text-white/70">Loading group...</p>
+          </div>
         </div>
       </div>
     );
@@ -125,101 +128,112 @@ const GroupPage = () => {
   const filteredRecs = getFilteredRecommendations();
 
   return (
-    <div className="min-h-screen bg-[#353535] text-white">
+    <div className="min-h-screen bg-[#141414] text-white">
       <Navbar />
-      <div className="container mx-auto px-4 py-4 md:py-8">
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-10 lg:px-8">
         
         {groupDetails &&  (
           
-          <div className="bg-[#1a1a1a] rounded-lg p-4 md:p-6 mb-6 md:mb-8">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4 md:mb-6">
-              <div>
-                <h1 className="text-2xl md:text-4xl font-bold mb-2">{groupDetails.name}</h1>
-                <p className="text-sm md:text-base text-gray-400">{groupDetails.description}</p>
+          <section className="mb-8 rounded-3xl border border-white/5 bg-[#1a1a1a] shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+            <div className="p-5 md:p-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-3">
+                  <div className="inline-flex rounded-full border border-[#e50914]/30 bg-[#e50914]/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#ffb3b7]">
+                    Group
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-black tracking-tight md:text-5xl">{groupDetails.name}</h1>
+                    <p className="mt-2 max-w-3xl text-sm text-white/70 md:text-base">{groupDetails.description}</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/5 bg-white/5 px-4 py-3 text-sm text-white/70">
+                  <div className="text-xs uppercase tracking-[0.2em] text-white/50">Created</div>
+                  <div className="mt-1 font-medium text-white">
+                    {groupDetails.createdAt?.seconds
+                      ? new Date(groupDetails.createdAt.seconds * 1000).toLocaleDateString()
+                      : 'Unknown'}
+                  </div>
+                </div>
               </div>
-              <div className="text-xs md:text-sm bg-[#353535] px-3 py-1 md:px-4 md:py-2 rounded-full self-start">
-                Created {new Date(groupDetails.createdAt.seconds * 1000).toLocaleDateString()}
-              </div>
-            </div>
 
-            <div className="border-t border-gray-700 pt-4">
-              <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Members</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-                {groupDetails.members.map((member) => (
-                  <div 
-                    key={member.userId}
-                    className="bg-[#353535] p-3 rounded-lg flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="font-medium text-sm md:text-base">
+              <div className="mt-5 border-t border-white/5 pt-5">
+                <h2 className="text-lg font-semibold md:text-xl">Members</h2>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {groupDetails.members.map((member) => (
+                    <div 
+                      key={member.userId}
+                      className="rounded-2xl border border-white/5 bg-[#141414] p-4"
+                    >
+                      <div className="font-medium text-white">
                         {memberDetails[member.userId]?.name || 'Loading...'}
                       </div>
-                      <div className="text-xs md:text-sm text-gray-400">
+                      <div className="mt-1 text-xs uppercase tracking-[0.2em] text-white/50">
                         {member.role}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-          <h2 className="text-xl md:text-2xl font-bold">Recommended Movies</h2>
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full md:w-auto">
-          <div className="relative">
-  <button
-    onClick={() => setShowUserFilter(!showUserFilter)}
-    className="w-full sm:w-auto bg-[#1a1a1a] text-white px-3 py-2 md:px-4 md:py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-sm md:text-base flex items-center justify-between"
-  >
-    <span>
-      {selectedUsers.length === 0 
-        ? 'All Recommendations' 
-        : `${selectedUsers.length} Selected`}
-    </span>
-    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-    </svg>
-  </button>
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold md:text-3xl">Recommended Movies</h2>
+            <p className="mt-1 text-sm text-white/60">Filter by who recommended the title and by genre.</p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative">
+              <button
+                onClick={() => setShowUserFilter(!showUserFilter)}
+                className="inline-flex w-full items-center justify-between gap-3 rounded-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-sm text-white/85 transition hover:bg-white/5 sm:w-auto"
+              >
+                <span>
+                  {selectedUsers.length === 0 
+                    ? 'All Recommendations' 
+                    : `${selectedUsers.length} Selected`}
+                </span>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
 
-  {showUserFilter && (
-    <div className="absolute z-50 mt-2 w-full bg-[#1a1a1a] rounded-lg shadow-xl border border-gray-700">
-      <div className="p-2">
-      {Object.entries(memberDetails)
-  .filter(([userId]) => 
-    recommendations.some(rec => 
-      rec.recommendedBy && rec.recommendedBy.includes(userId)
-    )
-  )
-  .map(([userId, user]) => (
-    <label key={userId} className="flex items-center p-2 hover:bg-[#2a2a2a] rounded">
-      <input
-        type="checkbox"
-        checked={selectedUsers.includes(userId)}
-        onChange={() => {
-          setSelectedUsers(prev => 
-            prev.includes(userId)
-              ? prev.filter(id => id !== userId)
-              : [...prev, userId]
-          );
-        }}
-        className="mr-2"
-      />
-      <span className="text-sm">{user.name}</span>
-    </label>
-  ))
-}
-
-      </div>
-    </div>
-  )}
-</div>
+              {showUserFilter && (
+                <div className="absolute z-50 mt-2 w-full min-w-64 overflow-hidden rounded-2xl border border-white/5 bg-[#1a1a1a] shadow-2xl">
+                  <div className="p-2">
+                    {Object.entries(memberDetails)
+                      .filter(([userId]) => 
+                        recommendations.some(rec => 
+                          rec.recommendedBy && rec.recommendedBy.includes(userId)
+                        )
+                      )
+                      .map(([userId, user]) => (
+                        <label key={userId} className="flex items-center rounded-xl px-3 py-2 text-sm transition hover:bg-white/5">
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.includes(userId)}
+                            onChange={() => {
+                              setSelectedUsers(prev => 
+                                prev.includes(userId)
+                                  ? prev.filter(id => id !== userId)
+                                  : [...prev, userId]
+                              );
+                            }}
+                            className="mr-3 accent-[#e50914]"
+                          />
+                          <span>{user.name}</span>
+                        </label>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <select
               value={selectedGenre}
               onChange={(e) => setSelectedGenre(e.target.value)}
-              className="w-full sm:w-auto bg-[#1a1a1a] text-white px-3 py-2 md:px-4 md:py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-sm md:text-base"
+              className="w-full rounded-full border border-white/10 bg-[#1a1a1a] px-4 py-3 text-sm text-white focus:border-[#e50914] focus:outline-none sm:w-auto"
             >
               <option value="all">All Genres</option>
               {genres.filter(genre => genre !== 'all').map(genre => (
@@ -233,9 +247,9 @@ const GroupPage = () => {
 
         <div className="space-y-8">
           {filteredRecs.combined.length > 0 && (
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Shared Recommendations</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <section>
+              <h3 className="mb-4 text-xl font-semibold">Shared Recommendations</h3>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {filteredRecs.combined.map(rec => (
                   <MovieCard
                     key={rec.id}
@@ -252,13 +266,13 @@ const GroupPage = () => {
                   />
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {filteredRecs.individual.length > 0 && (
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Individual Recommendations</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <section>
+              <h3 className="mb-4 text-xl font-semibold">Individual Recommendations</h3>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {filteredRecs.individual.map(rec => (
                   <MovieCard
                     key={rec.id}
@@ -275,12 +289,12 @@ const GroupPage = () => {
                   />
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {filteredRecs.combined.length === 0 && filteredRecs.individual.length === 0 && (
-            <div className="text-center text-lg md:text-xl opacity-75 mt-8">
-              No movies found with selected filters
+            <div className="rounded-3xl border border-white/5 bg-[#1a1a1a] px-6 py-10 text-center shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+              <div className="text-lg font-semibold md:text-xl">No movies found with selected filters</div>
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
     collection, 
     getDocs, 
@@ -39,7 +39,7 @@ const GroupsPage = () => {
       const groupList = groupDocs.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(group => 
-          group.members.some(member => member.userId === user.uid)
+          group.members?.some(member => member.userId === user.uid)
         );
       setGroups(groupList);
     };
@@ -72,6 +72,11 @@ useEffect(() => {
   
     fetchRecommendationCounts();
   }, []);
+
+  const totalMovies = useMemo(
+    () => Object.values(recommendationCounts).reduce((sum, count) => sum + count, 0),
+    [recommendationCounts]
+  );
 
   
   const handleCreateGroup = async (e) => {
@@ -207,207 +212,181 @@ useEffect(() => {
       
     
   return (
-    <div className="min-h-screen bg-[#353535] text-white">
+    <div className="min-h-screen bg-[#141414] text-white">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-row justify-between items-center mb-8 gap-4">
-  <h1 className="text-4xl font-bold">My Groups</h1>
-  
-  <div className="flex flex-row gap-3">
-    <button
-      onClick={() => setShowCreateModal(true)}
-      className="bg-[#1a1a1a] px-4 py-3 rounded-lg hover:bg-[#2a2a2a] 
-                 transition-all duration-300 flex items-center justify-center gap-2"
-    >
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-              d="M12 4v16m8-8H4" />
-      </svg>
-      <span className="font-semibold">Create Group</span>
-    </button>
+      <div className="mx-auto max-w-7xl px-4 py-6 pb-24 md:px-6 md:py-10 lg:px-8">
+        <section className="mb-8 rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.35)] md:p-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-3">
+              <div className="inline-flex rounded-full border border-[#e50914]/30 bg-[#e50914]/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#ffb3b7]">
+                Groups
+              </div>
+              <div>
+                <h1 className="text-3xl font-black tracking-tight md:text-5xl">My Groups</h1>
+                <p className="mt-2 max-w-2xl text-sm text-white/70 md:text-base">
+                  Create rooms, share invite codes, and keep recommendations curated together.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-sm text-white/60">
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{groups.length} groups</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">{totalMovies} movies</span>
+              </div>
+            </div>
 
-    <button
-      onClick={() => setShowJoinModal(true)}
-      className="bg-blue-600 px-4 py-3 rounded-lg hover:bg-blue-700 
-                 transition-all duration-300 flex items-center justify-center gap-2"
-    >
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-      </svg>
-      <span className="font-semibold">Join Group</span>
-    </button>
-  </div>
-</div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 font-semibold text-white transition hover:bg-white/10"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Create Group
+              </button>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {groups.map(group => (
-  <div key={group.id} 
-       className="bg-[#1a1a1a] p-6 rounded-lg hover:scale-105 transition-transform duration-300 relative"
-  >
-    {/* Options Button */}
-    <div className="absolute top-4 right-4 options-container" onClick={(e) => e.stopPropagation()}>
-      <div className="relative">
-        <button 
-          onClick={() => setOpenOptionsId(openOptionsId === group.id ? null : group.id)}
-          className="p-2 hover:bg-[#2a2a2a] rounded-full"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
-              d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-          </svg>
-        </button>
-        
-        {openOptionsId === group.id && (
-          <div className="absolute right-0 mt-2 w-48 bg-[#1a1a1a] rounded-lg shadow-xl z-50 border border-gray-700">
-            <button
-              onClick={() => {
-                setShowEditModal(true);
-                setEditingGroup(group);
-                setOpenOptionsId(null);
-              }}
-              className="w-full text-left px-4 py-2 hover:bg-[#2a2a2a] rounded-t-lg"
-            >
-              Edit Group
-            </button>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(group.inviteCode);
-                setOpenOptionsId(null);
-              }}
-              className="w-full text-left px-4 py-2 hover:bg-[#2a2a2a]"
-            >
-              Copy Invite Code
-            </button>
-            {group.members.find(member => 
-              member.userId === user.uid && member.role === 'admin'
-            ) ? (
               <button
-                onClick={() => {
-                  handleDeleteGroup(group.id);
-                  setOpenOptionsId(null);
-                }}
-                className="w-full text-left px-4 py-2 hover:bg-red-600 rounded-b-lg text-red-500 hover:text-white"
+                onClick={() => setShowJoinModal(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#e50914] px-5 py-3 font-semibold text-white shadow-lg shadow-[#e50914]/20 transition hover:bg-[#c40812]"
               >
-                Delete Group
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Join Group
               </button>
-            ) : (
-              <button
-                onClick={() => {
-                  handleExitGroup(group.id);
-                  setOpenOptionsId(null);
-                }}
-                className="w-full text-left px-4 py-2 hover:bg-red-600 rounded-b-lg text-red-500 hover:text-white"
+            </div>
+          </div>
+        </section>
+
+        {groups.length === 0 ? (
+          <div className="rounded-3xl border border-white/5 bg-[#1a1a1a] px-6 py-12 text-center shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
+            <div className="text-2xl font-bold">No groups yet</div>
+            <p className="mt-2 text-sm text-white/60">Create a group or join one with an invite code to get started.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {groups.map(group => (
+              <div
+                key={group.id}
+                className="relative overflow-hidden rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-[0_16px_50px_rgba(0,0,0,0.35)] transition duration-300 hover:-translate-y-1 hover:border-[#e50914]/40"
               >
-                Exit Group
-              </button>
-            )}
+                <div className="absolute top-4 right-4 options-container" onClick={(e) => e.stopPropagation()}>
+                  <div className="relative">
+                    <button
+                      onClick={() => setOpenOptionsId(openOptionsId === group.id ? null : group.id)}
+                      className="rounded-full border border-white/10 bg-black/30 p-2 text-white/80 backdrop-blur transition hover:bg-white/10"
+                      aria-label="Group options"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </button>
+
+                    {openOptionsId === group.id && (
+                      <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-2xl border border-white/5 bg-[#1a1a1a] shadow-2xl z-50">
+                        <button
+                          onClick={() => {
+                            setShowEditModal(true);
+                            setEditingGroup(group);
+                            setOpenOptionsId(null);
+                          }}
+                          className="w-full px-4 py-3 text-left text-sm transition hover:bg-white/5"
+                        >
+                          Edit Group
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(group.inviteCode);
+                            setOpenOptionsId(null);
+                          }}
+                          className="w-full px-4 py-3 text-left text-sm transition hover:bg-white/5"
+                        >
+                          Copy Invite Code
+                        </button>
+                        {group.members?.find(member => 
+                          member.userId === user.uid && member.role === 'admin'
+                        ) ? (
+                          <button
+                            onClick={() => {
+                              handleDeleteGroup(group.id);
+                              setOpenOptionsId(null);
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm text-[#ff9aa0] transition hover:bg-[#e50914] hover:text-white"
+                          >
+                            Delete Group
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              handleExitGroup(group.id);
+                              setOpenOptionsId(null);
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm text-[#ff9aa0] transition hover:bg-[#e50914] hover:text-white"
+                          >
+                            Exit Group
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div onClick={() => navigate(`/group/${group.id}`)} className="cursor-pointer pt-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h2 className="text-2xl font-bold leading-tight">{group.name}</h2>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/60">
+                      Group
+                    </span>
+                  </div>
+                  <p className="text-sm leading-6 text-white/70">{group.description}</p>
+                  <div className="mt-5 flex items-center justify-between text-sm text-white/70">
+                    <span>{group.members?.length || 1} members</span>
+                    <span className="rounded-full border border-white/10 bg-[#141414] px-3 py-1 text-white/80">
+                      {recommendationCounts[group.id] || 0} movies
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
-    </div>
 
-    {/* Card Content - Clickable for navigation */}
-    <div onClick={() => navigate(`/group/${group.id}`)} className="cursor-pointer">
-      <h2 className="text-2xl font-bold mb-2">{group.name}</h2>
-      <p className="text-sm opacity-75 mb-4">{group.description}</p>
-      <div className="flex justify-between items-center text-sm opacity-75">
-        <span>{group.members?.length || 1} members</span>
-        <span className="bg-[#353535] px-3 py-1 rounded-full">
-          {recommendationCounts[group.id] || 0} movies
-        </span>
-      </div>
-    </div>
-  </div>
-))}
-
-          
-         
-        </div>
-      </div>
-{/* Join Group Modal */}
-{showJoinModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-[#1a1a1a] p-8 rounded-lg w-full max-w-md">
-      <h2 className="text-2xl font-bold mb-6">Join Group</h2>
-      {joinError && (
-        <div className="bg-red-500 bg-opacity-10 border border-red-500 text-red-500 px-4 py-2 rounded mb-4">
-          {joinError}
-        </div>
-      )}
-      <form onSubmit={handleJoinGroup} className="space-y-4">
-        <div>
-          <label className="block mb-2">Invite Code</label>
-          <input
-            type="text"
-            value={inviteCode}
-            onChange={(e) => setInviteCode(e.target.value)}
-            className="w-full p-3 rounded bg-[#353535] text-white border-none uppercase"
-            placeholder="Enter invite code"
-            required
-          />
-        </div>
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            className="flex-1 bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700"
-          >
-            Join
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setShowJoinModal(false);
-              setInviteCode('');
-              setJoinError('');
-            }}
-            className="flex-1 bg-gray-600 text-white p-3 rounded font-semibold hover:bg-gray-700"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
-      {/* Create Group Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#1a1a1a] p-8 rounded-lg w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6">Create New Group</h2>
-            <form onSubmit={handleCreateGroup} className="space-y-4">
+      {showJoinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-2xl md:p-8">
+            <h2 className="text-2xl font-bold mb-6">Join Group</h2>
+            {joinError && (
+              <div className="mb-4 rounded-2xl border border-[#e50914]/30 bg-[#e50914]/10 px-4 py-2 text-[#ffb3b7]">
+                {joinError}
+              </div>
+            )}
+            <form onSubmit={handleJoinGroup} className="space-y-4">
               <div>
-                <label className="block mb-2">Group Name</label>
+                <label className="block mb-2">Invite Code</label>
                 <input
                   type="text"
-                  value={newGroup.name}
-                  onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
-                  className="w-full p-3 rounded bg-[#353535] text-white border-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block mb-2">Description</label>
-                <textarea
-                  value={newGroup.description}
-                  onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
-                  className="w-full p-3 rounded bg-[#353535] text-white border-none"
-                  rows="3"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-[#141414] p-3 uppercase text-white focus:border-[#e50914] focus:outline-none"
+                  placeholder="Enter invite code"
                   required
                 />
               </div>
               <div className="flex gap-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700"
+                  className="flex-1 rounded-xl bg-[#e50914] p-3 font-semibold text-white hover:bg-[#c40812]"
                 >
-                  Create
+                  Join
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 bg-gray-600 text-white p-3 rounded font-semibold hover:bg-gray-700"
+                  onClick={() => {
+                    setShowJoinModal(false);
+                    setInviteCode('');
+                    setJoinError('');
+                  }}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 font-semibold text-white hover:bg-white/10"
                 >
                   Cancel
                 </button>
@@ -416,53 +395,99 @@ useEffect(() => {
           </div>
         </div>
       )}
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-2xl md:p-8">
+            <h2 className="text-2xl font-bold mb-6">Create New Group</h2>
+            <form onSubmit={handleCreateGroup} className="space-y-4">
+              <div>
+                <label className="block mb-2">Group Name</label>
+                <input
+                  type="text"
+                  value={newGroup.name}
+                  onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
+                  className="w-full rounded-xl border border-white/10 bg-[#141414] p-3 text-white focus:border-[#e50914] focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-2">Description</label>
+                <textarea
+                  value={newGroup.description}
+                  onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
+                  className="w-full rounded-xl border border-white/10 bg-[#141414] p-3 text-white focus:border-[#e50914] focus:outline-none"
+                  rows="3"
+                  required
+                />
+              </div>
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-[#e50914] p-3 font-semibold text-white hover:bg-[#c40812]"
+                >
+                  Create
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 font-semibold text-white hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {showEditModal && editingGroup && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-[#1a1a1a] p-8 rounded-lg w-full max-w-md">
-      <h2 className="text-2xl font-bold mb-6">Edit Group</h2>
-      <form onSubmit={handleEditGroup} className="space-y-4">
-        <div>
-          <label className="block mb-2">Group Name</label>
-          <input
-            type="text"
-            value={editingGroup.name}
-            onChange={(e) => setEditingGroup({...editingGroup, name: e.target.value})}
-            className="w-full p-3 rounded bg-[#353535] text-white border-none"
-            required
-          />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-2xl md:p-8">
+            <h2 className="text-2xl font-bold mb-6">Edit Group</h2>
+            <form onSubmit={handleEditGroup} className="space-y-4">
+              <div>
+                <label className="block mb-2">Group Name</label>
+                <input
+                  type="text"
+                  value={editingGroup.name}
+                  onChange={(e) => setEditingGroup({...editingGroup, name: e.target.value})}
+                  className="w-full rounded-xl border border-white/10 bg-[#141414] p-3 text-white focus:border-[#e50914] focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block mb-2">Description</label>
+                <textarea
+                  value={editingGroup.description}
+                  onChange={(e) => setEditingGroup({...editingGroup, description: e.target.value})}
+                  className="w-full rounded-xl border border-white/10 bg-[#141414] p-3 text-white focus:border-[#e50914] focus:outline-none"
+                  rows="3"
+                  required
+                />
+              </div>
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-[#e50914] p-3 font-semibold text-white hover:bg-[#c40812]"
+                >
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingGroup(null);
+                  }}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 font-semibold text-white hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-        <div>
-          <label className="block mb-2">Description</label>
-          <textarea
-            value={editingGroup.description}
-            onChange={(e) => setEditingGroup({...editingGroup, description: e.target.value})}
-            className="w-full p-3 rounded bg-[#353535] text-white border-none"
-            rows="3"
-            required
-          />
-        </div>
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            className="flex-1 bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700"
-          >
-            Save Changes
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setShowEditModal(false);
-              setEditingGroup(null);
-            }}
-            className="flex-1 bg-gray-600 text-white p-3 rounded font-semibold hover:bg-gray-700"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 };

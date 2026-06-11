@@ -75,10 +75,10 @@ const WatchlistButton = ({ movie }) => {
   return (
     <button
       onClick={handleToggle}
-      className={`px-6 py-3 rounded-lg transition-colors duration-300 flex items-center gap-2
+      className={`px-5 py-3 rounded-xl transition-all duration-300 flex items-center gap-2 border shadow-lg
         ${isWatched 
-          ? 'bg-green-600 hover:bg-green-700' 
-          : 'bg-[#1a1a1a] hover:bg-[#2a2a2a]'} text-white`}
+          ? 'bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-100 border-emerald-400/20' 
+          : 'bg-white/5 hover:bg-white/10 text-white border-white/10'}`}
     >
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         {isWatched ? (

@@ -135,8 +135,8 @@ const RecommendButton = ({ movie }) => {
       <>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-[#1a1a1a] text-white px-6 py-3 rounded-lg hover:bg-[#2a2a2a] 
-                     transition-colors duration-300 flex items-center gap-2 ml-4"
+          className="bg-[#e50914] text-white px-5 py-3 rounded-xl hover:bg-[#c40812] 
+                     transition-colors duration-300 flex items-center gap-2 shadow-lg shadow-[#e50914]/20"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
@@ -146,19 +146,19 @@ const RecommendButton = ({ movie }) => {
         </button>
   
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-[#1a1a1a] p-8 rounded-lg w-full max-w-md">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+            <div className="bg-[#1a1a1a] p-6 md:p-8 rounded-2xl w-full max-w-md border border-white/5 shadow-2xl">
               <h2 className="text-2xl font-bold mb-6">Manage Recommendations</h2>
               <div className="space-y-4">
                 {recommendedGroups.length > 0 && (
                   <div className="mb-4">
                     <h3 className="text-lg font-semibold mb-2">Already Recommended to:</h3>
                     {groups.filter(g => recommendedGroups.includes(g.id)).map(group => (
-                      <div key={group.id} className="flex justify-between items-center p-2 bg-[#2a2a2a] rounded mb-2">
+                      <div key={group.id} className="flex justify-between items-center p-3 bg-white/5 rounded-xl mb-2 border border-white/5">
                         <span>{group.name}</span>
                         <button
                           onClick={() => handleRemoveRecommendation(group.id)}
-                          className="text-red-500 hover:text-red-400"
+                          className="text-[#ff9aa0] hover:text-white"
                         >
                           Remove
                         </button>
@@ -172,7 +172,7 @@ const RecommendButton = ({ movie }) => {
                   <select
                     value={selectedGroupId}
                     onChange={(e) => setSelectedGroupId(e.target.value)}
-                    className="w-full p-3 rounded bg-[#353535] text-white border-none"
+                    className="w-full p-3 rounded-xl bg-[#141414] text-white border border-white/10 focus:outline-none focus:border-[#e50914]"
                   >
                     <option value="">Select a group</option>
                     {groups
@@ -190,8 +190,8 @@ const RecommendButton = ({ movie }) => {
                   <button
                     onClick={handleRecommend}
                     disabled={!selectedGroupId}
-                    className="flex-1 bg-blue-600 text-white p-3 rounded font-semibold 
-                             hover:bg-blue-700 disabled:opacity-50"
+                    className="flex-1 bg-[#e50914] text-white p-3 rounded-xl font-semibold 
+                             hover:bg-[#c40812] disabled:opacity-50"
                   >
                     Recommend
                   </button>
@@ -200,7 +200,7 @@ const RecommendButton = ({ movie }) => {
                       setShowModal(false);
                       setSelectedGroupId('');
                     }}
-                    className="flex-1 bg-gray-600 text-white p-3 rounded font-semibold hover:bg-gray-700"
+                    className="flex-1 bg-white/5 text-white p-3 rounded-xl font-semibold hover:bg-white/10 border border-white/10"
                   >
                     Close
                   </button>

@@ -68,7 +68,7 @@ const WishlistCard = ({ movie, onUpdate,isWatched }) => {
   };
   return (
     <div 
-    className="relative overflow-hidden rounded-lg bg-[#1a1a1a] text-white hover:scale-105 transition-transform duration-300 z-0"
+    className="relative overflow-hidden rounded-2xl bg-[#1a1a1a] text-white transition-transform duration-300 z-0 border border-white/5 hover:-translate-y-1 hover:border-[#e50914]/40 shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
     onClick={() => navigate(`/movie/${movie.movieId}`)}
   > 
     {/* Options Button */}
@@ -79,7 +79,7 @@ const WishlistCard = ({ movie, onUpdate,isWatched }) => {
     >
       <button
         onClick={() => setShowOptions(!showOptions)}
-        className="p-2 hover:bg-[#353535] rounded-full bg-[#1a1a1a] bg-opacity-75"
+        className="p-2 hover:bg-white/10 rounded-full bg-black/40 backdrop-blur text-white border border-white/10"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path 
@@ -92,16 +92,16 @@ const WishlistCard = ({ movie, onUpdate,isWatched }) => {
       </button>
 
       {showOptions && (
-        <div className="absolute right-0 mt-2 w-48 bg-[#1a1a1a] rounded-lg shadow-xl z-50 border border-gray-700">
+        <div className="absolute right-0 mt-2 w-48 bg-[#1a1a1a] rounded-2xl shadow-xl z-50 border border-white/5 overflow-hidden">
           <button
             onClick={handleToggleWatched}
-            className="w-full text-left px-4 py-2 hover:bg-[#2a2a2a] rounded-t-lg"
+            className="w-full text-left px-4 py-3 hover:bg-white/5"
           >
             {isWatched ? 'Mark as Unwatched' : 'Mark as Watched'}
           </button>
           <button
             onClick={handleRemove}
-            className="w-full text-left px-4 py-2 hover:bg-red-600 rounded-b-lg text-red-500 hover:text-white"
+            className="w-full text-left px-4 py-3 hover:bg-[#e50914] text-[#ff9aa0] hover:text-white border-t border-white/5"
           >
             Remove {isWatched ? 'from Watched' : 'from Watchlist'}
           </button>
@@ -110,25 +110,25 @@ const WishlistCard = ({ movie, onUpdate,isWatched }) => {
       </div>
 
       {/* Movie Image */}
-      <div className="relative h-[400px]">
+      <div className="relative aspect-[2/3] min-h-[360px]">
         <img 
           src={movie.poster !== 'N/A' ? movie.poster : 'https://via.placeholder.com/300x450?text=No+Poster'} 
           alt={movie.title} 
           className="w-full h-full object-cover opacity-80"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
       </div>
       
       {/* Movie Details */}
       <div className="absolute bottom-0 left-0 right-0 p-6">
-        <div className="mb-2 text-sm uppercase tracking-wider opacity-75">
+        <div className="mb-2 text-xs uppercase tracking-[0.18em] text-white/70">
           {movie.type}
         </div>
-        <h2 className="text-2xl font-bold mb-2">{movie.title}</h2>
-        <div className="flex items-center justify-between">
-          <span className="text-lg">{movie.year}</span>
+        <h2 className="text-2xl font-bold mb-2 leading-tight">{movie.title}</h2>
+        <div className="flex items-center justify-between text-white/75">
+          <span className="text-sm md:text-base">{movie.year}</span>
           {movie.rating && (
-            <span className="text-lg">★ {movie.rating}</span>
+            <span className="text-sm md:text-base">★ {movie.rating}</span>
           )}
         </div>
       </div>
