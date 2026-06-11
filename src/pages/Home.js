@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   arrayRemove,
@@ -13,11 +13,13 @@ import {
   where,
 } from "firebase/firestore";
 import {
-  parseMovieYear,
-  searchMoviesByQueries,
-  searchMultipleMovies,
-  isLikelyContentTitle,
+  ADVANCED_SEARCH_GENRES,
   getMovieSummaryById,
+  isLikelyContentTitle,
+  parseMovieYear,
+  parseSearchYearRange,
+  searchMoviesByQueries,
+  searchMoviesWithFilters,
 } from "../services/omdbApi";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -426,6 +428,67 @@ const uniqueLimit = (items, limit) => {
     if (result.length >= limit) break;
   }
   return result;
+};
+
+const EMPTY_SEARCH_FILTERS = {
+  genre: "",
+  yearRange: "",
+  languageOrCountry: "",
+};
+
+const createSubmittedSearch = (overrides = {}) => ({
+  query: "",
+  type: "all",
+  ...EMPTY_SEARCH_FILTERS,
+  ...overrides,
+});
+
+const hasCommittedSearch = (search) => {
+  if (!search) return false;
+  return Boolean(
+    (typeof search.query === "string" && search.query.trim()) ||
+      search.type === "movie" ||
+      search.type === "series" ||
+      (typeof search.genre === "string" && search.genre.trim()) ||
+      (typeof search.yearRange === "string" && search.yearRange.trim()) ||
+      (typeof search.languageOrCountry === "string" && search.languageOrCountry.trim())
+  );
+};
+
+const flattenSearchSeedMovies = (shelves) => {
+  const deduped = new Map();
+  Object.values(shelves || {}).forEach((items) => {
+    safeArray(items).forEach((movie) => {
+      if (!movie?.imdbID || deduped.has(movie.imdbID)) return;
+      deduped.set(movie.imdbID, movie);
+    });
+  });
+  return Array.from(deduped.values());
+};
+
+const buildSearchChips = (search, yearRange) => {
+  const chips = [];
+
+  if (search?.type && search.type !== "all") {
+    chips.push({
+      key: "type",
+      label: search.type === "series" ? "Series" : "Movies",
+    });
+  }
+
+  if (search?.genre) {
+    chips.push({ key: "genre", label: search.genre });
+  }
+
+  if (yearRange?.raw) {
+    chips.push({ key: "year", label: `Year ${yearRange.raw}` });
+  }
+
+  if (search?.languageOrCountry?.trim()) {
+    chips.push({ key: "region", label: search.languageOrCountry.trim() });
+  }
+
+  return chips;
 };
 
 const formatReasonLabel = (rawValue) => {
@@ -1255,8 +1318,9 @@ const Home = () => {
   const { user } = useAuth();
   const userScopeId = user?.uid || "guest";
   const [draftSearchTerm, setDraftSearchTerm] = useState("");
-  const [submittedSearchTerm, setSubmittedSearchTerm] = useState("");
-  const [type, setType] = useState("all");
+  const [draftSearchType, setDraftSearchType] = useState("all");
+  const [draftSearchFilters, setDraftSearchFilters] = useState(EMPTY_SEARCH_FILTERS);
+  const [submittedSearch, setSubmittedSearch] = useState(createSubmittedSearch());
   const [page, setPage] = useState(1);
 
   const [searchMovies, setSearchMovies] = useState([]);
@@ -1277,8 +1341,20 @@ const Home = () => {
   const [engagement, setEngagement] = useState(defaultEngagement(getDayBucket()));
   const [shelfLoading, setShelfLoading] = useState(true);
 
-  const normalizedSubmittedSearchTerm = submittedSearchTerm.trim();
-  const isSearchActive = normalizedSubmittedSearchTerm.length > 0;
+  const normalizedSubmittedSearchTerm = submittedSearch.query.trim();
+  const submittedYearRange = useMemo(
+    () => parseSearchYearRange(submittedSearch.yearRange),
+    [submittedSearch.yearRange]
+  );
+  const searchSeedMovies = useMemo(
+    () => flattenSearchSeedMovies(sourceShelfData),
+    [sourceShelfData]
+  );
+  const activeSearchChips = useMemo(
+    () => buildSearchChips(submittedSearch, submittedYearRange),
+    [submittedSearch, submittedYearRange]
+  );
+  const isSearchActive = hasCommittedSearch(submittedSearch);
 
   useEffect(() => {
     const dayBucket = getDayBucket();
@@ -1442,22 +1518,34 @@ const Home = () => {
       setSearchError(null);
       return;
     }
+
+    if (!submittedYearRange.isValid) {
+      setSearchMovies([]);
+      setSearchTotal(0);
+      setSearchError("Enter a year like 2019 or 2019-2022.");
+      return;
+    }
+
     const fetchSearch = async () => {
       setSearchLoading(true);
       setSearchError(null);
       try {
-        const result = await searchMultipleMovies(normalizedSubmittedSearchTerm, {
-          type: type !== "all" ? type : undefined,
+        const result = await searchMoviesWithFilters(submittedSearch, {
           page,
+          seedMovies: searchSeedMovies,
         });
+
         if (result.Response === "True") {
           setSearchMovies((prev) =>
             page === 1 ? result.Search : [...prev, ...result.Search]
           );
-          setSearchTotal(parseInt(result.totalResults));
+          setSearchTotal(parseInt(result.totalResults, 10) || 0);
         } else {
-          if (result.Error !== "Too many results.") setSearchError(result.Error);
-          if (page === 1) { setSearchMovies([]); setSearchTotal(0); }
+          if (result.Error) setSearchError(result.Error);
+          if (page === 1) {
+            setSearchMovies([]);
+            setSearchTotal(0);
+          }
         }
       } catch {
         setSearchError("Failed to fetch movies");
@@ -1466,7 +1554,7 @@ const Home = () => {
     };
     const id = setTimeout(fetchSearch, 300);
     return () => clearTimeout(id);
-  }, [normalizedSubmittedSearchTerm, type, page, isSearchActive]);
+  }, [isSearchActive, page, searchSeedMovies, submittedSearch, submittedYearRange]);
 
   const recordEngagement = (eventType, shelfKey, movie) => {
     const dayBucket = getDayBucket();
@@ -1517,15 +1605,27 @@ const Home = () => {
   };
 
   const handleSearchSubmit = (value) => {
-    const nextSubmittedSearchTerm = typeof value === "string" ? value.trim() : "";
-    setDraftSearchTerm(typeof value === "string" ? value : "");
-    setSubmittedSearchTerm(nextSubmittedSearchTerm);
+    const nextDraftSearchTerm = typeof value === "string" ? value : draftSearchTerm;
+    setDraftSearchTerm(nextDraftSearchTerm);
+    setSubmittedSearch(
+      createSubmittedSearch({
+        query: typeof nextDraftSearchTerm === "string" ? nextDraftSearchTerm.trim() : "",
+        type: draftSearchType,
+        ...draftSearchFilters,
+      })
+    );
     setPage(1);
   };
 
   const handleSearchTypeChange = (value) => {
-    setType(value);
-    setPage(1);
+    setDraftSearchType(value);
+  };
+
+  const handleSearchFilterChange = (key, value) => {
+    setDraftSearchFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   const handleSelectMovie = (movie) => {
@@ -1559,10 +1659,13 @@ const Home = () => {
     <div className="min-h-screen bg-[#141414] text-white">
       <Navbar
         searchTerm={draftSearchTerm}
-        searchType={type}
+        searchType={draftSearchType}
+        searchFilters={draftSearchFilters}
+        searchGenreOptions={ADVANCED_SEARCH_GENRES}
         onSearchChange={handleSearchChange}
         onSearchSubmit={handleSearchSubmit}
         onSearchTypeChange={handleSearchTypeChange}
+        onSearchFilterChange={handleSearchFilterChange}
         onSearchSelectMovie={handleSelectMovie}
       />
 
@@ -1626,6 +1729,39 @@ const Home = () => {
 
       {isSearchActive && (
         <div className="container mx-auto px-4 pt-6 pb-8">
+          <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-4 shadow-[0_0_32px_rgba(229,9,20,0.08)]">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/45">
+                  Search
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold text-white">
+                  {normalizedSubmittedSearchTerm
+                    ? `Results for "${normalizedSubmittedSearchTerm}"`
+                    : "Filtered recommendations"}
+                </h2>
+              </div>
+              <p className="text-sm text-white/55">
+                {searchTotal > 0
+                  ? `${searchTotal} ranked match${searchTotal === 1 ? "" : "es"}`
+                  : "Ranking results with OMDb metadata"}
+              </p>
+            </div>
+
+            {activeSearchChips.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {activeSearchChips.map((chip) => (
+                  <span
+                    key={chip.key}
+                    className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs font-medium text-white/75"
+                  >
+                    {chip.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
           {searchError && (
             <div className="text-center text-red-500 mb-4">{searchError}</div>
           )}
@@ -1634,11 +1770,15 @@ const Home = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {Array.from({ length: 10 }).map((_, i) => <GridSkeletonCard key={i} />)}
             </div>
-          ) : (
+          ) : searchMovies.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {searchMovies.map((movie) => (
                 <MovieCard key={movie.imdbID} movie={movie} />
               ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-10 text-center text-white/65">
+              No matching titles were found for this search.
             </div>
           )}
 
