@@ -23,7 +23,6 @@ import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
 import Navbar from "../components/Navbar";
 import MovieCard from "../components/MovieCard";
-import SearchAutocomplete from "../components/SearchAutocomplete";
 
 const FALLBACK_POSTER = "https://via.placeholder.com/300x450?text=No+Poster";
 
@@ -1252,16 +1251,11 @@ const composeShelves = (baseShelves, personalizedShelf, socialShelf) => {
   };
 };
 
-const TYPE_PILLS = [
-  { value: "all", label: "All" },
-  { value: "movie", label: "Movies" },
-  { value: "series", label: "Series" },
-];
-
 const Home = () => {
   const { user } = useAuth();
   const userScopeId = user?.uid || "guest";
-  const [searchTerm, setSearchTerm] = useState("");
+  const [draftSearchTerm, setDraftSearchTerm] = useState("");
+  const [submittedSearchTerm, setSubmittedSearchTerm] = useState("");
   const [type, setType] = useState("all");
   const [page, setPage] = useState(1);
 
@@ -1283,8 +1277,8 @@ const Home = () => {
   const [engagement, setEngagement] = useState(defaultEngagement(getDayBucket()));
   const [shelfLoading, setShelfLoading] = useState(true);
 
-  const autocompleteRef = useRef(null);
-  const isSearchActive = searchTerm.length >= 2;
+  const normalizedSubmittedSearchTerm = submittedSearchTerm.trim();
+  const isSearchActive = normalizedSubmittedSearchTerm.length > 0;
 
   useEffect(() => {
     const dayBucket = getDayBucket();
@@ -1452,7 +1446,7 @@ const Home = () => {
       setSearchLoading(true);
       setSearchError(null);
       try {
-        const result = await searchMultipleMovies(searchTerm, {
+        const result = await searchMultipleMovies(normalizedSubmittedSearchTerm, {
           type: type !== "all" ? type : undefined,
           page,
         });
@@ -1472,7 +1466,7 @@ const Home = () => {
     };
     const id = setTimeout(fetchSearch, 300);
     return () => clearTimeout(id);
-  }, [searchTerm, type, page, isSearchActive]);
+  }, [normalizedSubmittedSearchTerm, type, page, isSearchActive]);
 
   const recordEngagement = (eventType, shelfKey, movie) => {
     const dayBucket = getDayBucket();
@@ -1518,9 +1512,25 @@ const Home = () => {
     setLastHidden(null);
   };
 
-  const handleSearchChange = (e) => { setSearchTerm(e.target.value); setPage(1); };
-  const handleInputKeyDown = (e) => {
-    if (autocompleteRef.current) autocompleteRef.current.handleKeyDown(e);
+  const handleSearchChange = (e) => {
+    setDraftSearchTerm(e.target.value);
+  };
+
+  const handleSearchSubmit = (value) => {
+    const nextSubmittedSearchTerm = typeof value === "string" ? value.trim() : "";
+    setDraftSearchTerm(typeof value === "string" ? value : "");
+    setSubmittedSearchTerm(nextSubmittedSearchTerm);
+    setPage(1);
+  };
+
+  const handleSearchTypeChange = (value) => {
+    setType(value);
+    setPage(1);
+  };
+
+  const handleSelectMovie = (movie) => {
+    const nextTitle = movie?.Title || "";
+    setDraftSearchTerm(nextTitle);
   };
 
   const goToHeroIndex = (index) => {
@@ -1547,7 +1557,14 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-[#141414] text-white">
-      <Navbar />
+      <Navbar
+        searchTerm={draftSearchTerm}
+        searchType={type}
+        onSearchChange={handleSearchChange}
+        onSearchSubmit={handleSearchSubmit}
+        onSearchTypeChange={handleSearchTypeChange}
+        onSearchSelectMovie={handleSelectMovie}
+      />
 
       {!isSearchActive && (
         <>
@@ -1561,39 +1578,6 @@ const Home = () => {
             onResume={() => setIsHeroPaused(false)}
             onOpenDetails={(movie) => recordEngagement("openDetail", movie?.heroShelfKey || "latest", movie)}
           />
-
-          <div className="relative z-20 -mt-8 flex flex-col items-center px-4">
-            <div className="w-full max-w-2xl bg-[#1a1a1a]/90 backdrop-blur-sm rounded-xl p-4 shadow-2xl">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search movies or series..."
-                  className="w-full px-4 py-3 rounded-lg bg-[#0a0a0a] text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#e50914] text-base placeholder-gray-500 transition-shadow"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  onKeyDown={handleInputKeyDown}
-                  autoComplete="off"
-                />
-                <SearchAutocomplete
-                  ref={autocompleteRef}
-                  searchTerm={searchTerm}
-                  type={type}
-                  onSelectMovie={(movie) => { setSearchTerm(movie.Title); setPage(1); }}
-                />
-              </div>
-              <div className="flex gap-2 mt-3 justify-center">
-                {TYPE_PILLS.map((pill) => (
-                  <button
-                    key={pill.value}
-                    onClick={() => { setType(pill.value); setPage(1); }}
-                    className={"px-4 py-1.5 rounded-full text-sm font-medium transition-colors " + (type === pill.value ? "bg-[#e50914] text-white" : "bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]")}
-                  >
-                    {pill.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
 
           <div className="mt-10">
             {(shelfLoading
@@ -1642,42 +1626,6 @@ const Home = () => {
 
       {isSearchActive && (
         <div className="container mx-auto px-4 pt-6 pb-8">
-          <div className="flex flex-col items-center mb-8">
-            <div className="relative w-full max-w-2xl">
-              <input
-                type="text"
-                placeholder="Search movies or series..."
-                className="w-full px-5 py-4 rounded-xl bg-[#1a1a1a] text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#e50914] text-lg placeholder-gray-500 shadow-[0_0_20px_rgba(229,9,20,0.15)] transition-shadow"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                onKeyDown={handleInputKeyDown}
-                autoComplete="off"
-              />
-              <SearchAutocomplete
-                ref={autocompleteRef}
-                searchTerm={searchTerm}
-                type={type}
-                onSelectMovie={(movie) => { setSearchTerm(movie.Title); setPage(1); }}
-              />
-            </div>
-            <div className="flex gap-2 mt-3">
-              {TYPE_PILLS.map((pill) => (
-                <button
-                  key={pill.value}
-                  onClick={() => { setType(pill.value); setPage(1); }}
-                  className={"px-4 py-1.5 rounded-full text-sm font-medium transition-colors " + (type === pill.value ? "bg-[#e50914] text-white" : "bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a]")}
-                >
-                  {pill.label}
-                </button>
-              ))}
-            </div>
-            {searchTotal > 0 && (
-              <p className="text-sm text-gray-400 mt-3">
-                Found <span className="text-white font-semibold">{searchTotal}</span> results for &ldquo;{searchTerm}&rdquo;
-              </p>
-            )}
-          </div>
-
           {searchError && (
             <div className="text-center text-red-500 mb-4">{searchError}</div>
           )}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { searchMultipleMovies } from '../services/omdbApi';
 
+const MIN_AUTOCOMPLETE_CHARS = 3;
+
 const SearchAutocomplete = forwardRef(({ searchTerm, onSelectMovie, type }, ref) => {
   const [suggestions, setSuggestions] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -9,14 +11,18 @@ const SearchAutocomplete = forwardRef(({ searchTerm, onSelectMovie, type }, ref)
   const containerRef = useRef(null);
 
   const fetchSuggestions = useCallback(async (term) => {
-    if (term.length < 2) {
+    const normalizedTerm = typeof term === 'string' ? term.trim() : '';
+
+    if (normalizedTerm.length < MIN_AUTOCOMPLETE_CHARS) {
       setSuggestions([]);
       setIsOpen(false);
+      setIsSearching(false);
       return;
     }
+
     setIsSearching(true);
     try {
-      const result = await searchMultipleMovies(term, {
+      const result = await searchMultipleMovies(normalizedTerm, {
         type: type && type !== 'all' ? type : undefined,
         page: 1,
       });
@@ -54,6 +60,7 @@ const SearchAutocomplete = forwardRef(({ searchTerm, onSelectMovie, type }, ref)
   }, []);
 
   const handleSelect = (movie) => {
+    setSuggestions([]);
     setIsOpen(false);
     setHighlightedIndex(-1);
     if (onSelectMovie) onSelectMovie(movie);

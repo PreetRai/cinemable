@@ -1,17 +1,29 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import SearchAutocomplete from './SearchAutocomplete';
 
-const Navbar = () => {
+const Navbar = ({
+  searchTerm = '',
+  searchType = 'all',
+  onSearchChange = null,
+  onSearchTypeChange = null,
+  onSearchSubmit = null,
+  onSearchSelectMovie = null,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const autocompleteRef = useRef(null);
 
   const location = useLocation();
   const displayName = useMemo(() => {
     return user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Profile';
   }, [user]);
+
+  const searchInputId = 'navbar-search-input';
+  const isSearchEnabled = typeof onSearchChange === 'function' && typeof onSearchTypeChange === 'function';
 
   const closeMenus = () => {
     setIsOpen(false);
@@ -21,6 +33,35 @@ const Navbar = () => {
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const ctaLinks = [
+    { to: '/', label: 'Home', active: isActive('/') },
+    ...(user
+      ? [
+          { to: '/wishlist', label: 'Watchlist', active: isActive('/wishlist') },
+          { to: '/groups', label: 'Groups', active: isActive('/groups') },
+          { to: '/profile', label: 'Profile', active: isActive('/profile') },
+        ]
+      : [
+          { to: '/login', label: 'Login', active: isActive('/login') },
+          { to: '/signup', label: 'Sign Up', active: isActive('/signup') },
+        ]),
+  ];
+
+  const handleSearchKeyDown = (event) => {
+    if (autocompleteRef.current?.handleKeyDown) {
+      autocompleteRef.current.handleKeyDown(event);
+    }
+
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    if (event.key === 'Enter' && typeof onSearchSubmit === 'function') {
+      event.preventDefault();
+      onSearchSubmit(searchTerm);
+    }
   };
 
   const handleLogout = async () => {
@@ -35,84 +76,176 @@ const Navbar = () => {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#141414]/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="rounded-full border border-white/10 bg-white/5 p-2 text-white/90 transition hover:bg-white/10"
-              aria-label="Open navigation menu"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="md:hidden">
+                <button
+                  onClick={() => setIsOpen(!isOpen)}
+                  className="rounded-full border border-white/10 bg-white/5 p-2 text-white/90 transition hover:bg-white/10"
+                  aria-label="Open navigation menu"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              </div>
 
-          <Link to="/" className="text-xl font-extrabold tracking-wide text-white md:text-2xl">
-            CinemAble
-          </Link>
+              <Link to="/" className="text-xl font-extrabold tracking-wide text-white md:text-2xl">
+                CinemAble
+              </Link>
+            </div>
 
-          <div className="relative">
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-white/90 transition hover:bg-white/10 focus:outline-none"
-            >
-              {user ? (
-                <>
-                  <span className="hidden sm:inline text-sm font-medium">{displayName}</span>
+            <div className="hidden lg:flex lg:flex-1 lg:justify-center">
+              <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+                {ctaLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={
+                      'rounded-full border px-3 py-1.5 transition ' +
+                      (link.active
+                        ? 'border-[#e50914]/50 bg-[#e50914]/15 text-[#ffd3d6]'
+                        : 'border-white/10 bg-white/5 text-white/75 hover:border-white/20 hover:bg-white/10 hover:text-white')
+                    }
+                    onClick={closeMenus}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-white/90 transition hover:bg-white/10 focus:outline-none"
+              >
+                {user ? (
+                  <>
+                    <span className="hidden sm:inline text-sm font-medium">{displayName}</span>
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </>
+                ) : (
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                </>
-              ) : (
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              )}
-            </button>
-
-            {showDropdown && (
-              <div className="absolute right-0 mt-3 w-52 overflow-hidden rounded-2xl border border-white/5 bg-[#1a1a1a] shadow-2xl z-50">
-                {user ? (
-                  <>
-                    <div className="border-b border-white/5 px-4 py-3 text-sm text-white/70">
-                      Signed in as<br />
-                      <span className="font-medium text-white">{user.email}</span>
-                    </div>
-                    <Link
-                      to="/profile"
-                      className="block w-full px-4 py-3 text-left text-sm text-white transition hover:bg-white/5"
-                      onClick={closeMenus}
-                    >
-                      Profile
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full px-4 py-3 text-left text-sm text-white transition hover:bg-white/5"
-                    >
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      to="/login"
-                      className="block px-4 py-3 text-sm text-white transition hover:bg-white/5"
-                      onClick={closeMenus}
-                    >
-                      Login
-                    </Link>
-                    <Link
-                      to="/signup"
-                      className="block px-4 py-3 text-sm text-white transition hover:bg-white/5"
-                      onClick={closeMenus}
-                    >
-                      Sign Up
-                    </Link>
-                  </>
                 )}
+              </button>
+
+              {showDropdown && (
+                <div className="absolute right-0 mt-3 w-52 overflow-hidden rounded-2xl border border-white/5 bg-[#1a1a1a] shadow-2xl z-50">
+                  {user ? (
+                    <>
+                      <div className="border-b border-white/5 px-4 py-3 text-sm text-white/70">
+                        Signed in as<br />
+                        <span className="font-medium text-white">{user.email}</span>
+                      </div>
+                      <Link
+                        to="/profile"
+                        className="block w-full px-4 py-3 text-left text-sm text-white transition hover:bg-white/5"
+                        onClick={closeMenus}
+                      >
+                        Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full px-4 py-3 text-left text-sm text-white transition hover:bg-white/5"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/login"
+                        className="block px-4 py-3 text-sm text-white transition hover:bg-white/5"
+                        onClick={closeMenus}
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        to="/signup"
+                        className="block px-4 py-3 text-sm text-white transition hover:bg-white/5"
+                        onClick={closeMenus}
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-col gap-3 lg:mt-4 lg:flex-row lg:items-center">
+            {isSearchEnabled && (
+              <div className="flex-1">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+                  <div className="relative flex-1 min-w-0">
+                    <label htmlFor={searchInputId} className="sr-only">
+                      Search movies or series
+                    </label>
+                    <input
+                      id={searchInputId}
+                      type="text"
+                      placeholder="Search movies or series..."
+                      className="w-full rounded-2xl border border-white/10 bg-[#0f0f0f] px-4 py-3.5 text-base text-white shadow-[0_0_22px_rgba(229,9,20,0.12)] outline-none transition placeholder:text-white/35 focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
+                      value={searchTerm}
+                      onChange={isSearchEnabled ? onSearchChange : undefined}
+                      onKeyDown={handleSearchKeyDown}
+                      autoComplete="off"
+                    />
+                    <SearchAutocomplete
+                      ref={autocompleteRef}
+                      searchTerm={searchTerm}
+                      type={searchType}
+                      onSelectMovie={onSearchSelectMovie}
+                    />
+                  </div>
+
+                  <div className="sm:w-40">
+                    <label className="sr-only" htmlFor="navbar-search-type">
+                      Search type
+                    </label>
+                    <select
+                      id="navbar-search-type"
+                      value={searchType}
+                      onChange={(event) => {
+                        if (typeof onSearchTypeChange === 'function') {
+                          onSearchTypeChange(event.target.value);
+                        }
+                      }}
+                      className="w-full rounded-2xl border border-white/10 bg-[#111111] px-4 py-3.5 text-sm font-medium text-white outline-none transition focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
+                    >
+                      <option value="all">All</option>
+                      <option value="movie">Movies</option>
+                      <option value="series">Series</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             )}
+
+            <div className="flex flex-wrap gap-2 text-sm lg:hidden">
+              {ctaLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={
+                    'rounded-full border px-3 py-1.5 transition ' +
+                    (link.active
+                      ? 'border-[#e50914]/50 bg-[#e50914]/15 text-[#ffd3d6]'
+                      : 'border-white/10 bg-white/5 text-white/75 hover:border-white/20 hover:bg-white/10 hover:text-white')
+                  }
+                  onClick={closeMenus}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </nav>
@@ -191,7 +324,7 @@ const Navbar = () => {
         </div>
       </nav>
 
-      <div className="h-16 md:h-0" />
+      <div className="h-44 md:h-36 lg:h-32" />
 
       <div
         className={`fixed top-0 left-0 h-full w-72 bg-[#141414] transform transition-transform duration-300 ease-in-out z-50 border-r border-white/5 ${

@@ -10,6 +10,7 @@ import Wishlist from './components/Wishlist';
 import GroupsPage from './components/GroupsPage';
 import GroupPage from './pages/GroupPage';
 import Profile from './pages/Profile';
+import EpisodeDetails from './pages/EpisodeDetails';
 
 function App() {
   return (
@@ -31,6 +32,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MovieDetails />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/episode/:imdbID/:seasonNumber/:episodeNumber" 
+            element={
+              <ProtectedRoute>
+                <EpisodeDetails />
               </ProtectedRoute>
             } 
           />

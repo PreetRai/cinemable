@@ -20,6 +20,13 @@ import { useAuth } from '../contexts/AuthContext';
 import Navbar from './Navbar';
 import WatchlistButton from '../components/WatchlistButton';
 import RecommendButton from '../components/RecommendButton';
+import {
+  getPlayImdbUrl,
+  probePlayImdbAvailability,
+} from '../services/playImdb';
+import {
+  getMovieSeasonData,
+} from '../services/omdbApi';
 
 const FALLBACK_POSTER = 'https://via.placeholder.com/300x450?text=No+Poster';
 const FALLBACK_BACKDROP = 'https://via.placeholder.com/1200x675?text=Cinemable';
@@ -144,6 +151,107 @@ const formatTimestamp = (value) => {
   return new Date(millis).toLocaleDateString();
 };
 
+const SeasonSelector = ({ totalSeasons, selectedSeason, onSelectSeason, loadingSeasons }) => {
+  if (!totalSeasons) return null;
+
+  const seasons = Array.from({ length: Math.min(totalSeasons, 20) }, (_, i) => i + 1);
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {seasons.map((season) => {
+        const isLoading = loadingSeasons.has(season);
+        const isSelected = selectedSeason === season;
+
+        return (
+          <button
+            key={season}
+            onClick={() => onSelectSeason(season)}
+            disabled={isLoading}
+            className={`
+              relative px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200
+              ${isSelected
+                ? 'bg-[#e50914] text-white shadow-lg shadow-[#e50914]/30 border border-[#e50914]'
+                : 'bg-white/5 text-white/80 border border-white/10 hover:bg-white/10 hover:border-white/20'
+              }
+              ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}
+            `}
+          >
+            {isLoading && (
+              <span className="absolute inset-0 flex items-center justify-center">
+                <span className="h-2 w-2 bg-white rounded-full animate-pulse" />
+              </span>
+            )}
+            <span className={isLoading ? 'invisible' : ''}>S{String(season).padStart(2, '0')}</span>
+          </button>
+        );
+      })}
+      {totalSeasons > 20 && (
+        <div className="px-4 py-2 text-xs text-white/50">+{totalSeasons - 20} more</div>
+      )}
+    </div>
+  );
+};
+
+const EpisodeList = ({ episodes, seasonNumber, imdbID }) => {
+  if (!episodes || episodes.length === 0) {
+    return (
+      <div className="rounded-2xl border border-white/5 bg-white/5 px-4 py-4 text-sm text-white/70">
+        No episode data available for this season.
+      </div>
+    );
+  }
+
+  const displayEpisodes = episodes.slice(0, 10);
+  const hasMore = episodes.length > 10;
+
+  return (
+    <div className="space-y-2">
+      <div className="max-h-96 overflow-y-auto pr-2">
+        <div className="space-y-2">
+          {displayEpisodes.map((episode) => {
+            const episodeNum = episode.Episode ? String(episode.Episode).padStart(2, '0') : '?';
+            const rating = episode.imdbRating && episode.imdbRating !== 'N/A' ? episode.imdbRating : null;
+            const aired = episode.Released && episode.Released !== 'N/A' ? episode.Released : null;
+            const episodeNumberInt = parseInt(episode.Episode, 10);
+
+            return (
+              <Link 
+                key={`${episode.Episode}:${episode.Title}`} 
+                to={`/episode/${imdbID}/${seasonNumber}/${episodeNumberInt}`}
+                className="rounded-xl border border-white/5 bg-black/20 p-3 hover:bg-black/30 transition block"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-xs font-bold text-[#e50914]">E{episodeNum}</p>
+                      <p className="text-sm font-semibold text-white line-clamp-1">{episode.Title || 'Untitled'}</p>
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/60">
+                      {aired && <span>{aired}</span>}
+                      {rating && <span className="flex items-center gap-1">
+                        <span className="text-[#e50914]">★</span>
+                        {rating}
+                      </span>}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {hasMore && (
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+          <p className="text-xs text-white/70">
+            Showing {displayEpisodes.length} of {episodes.length} episodes
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Section = ({ eyebrow, title, description, children, className = '' }) => (
   <section className={`rounded-3xl border border-white/5 bg-[#1a1a1a]/90 shadow-[0_18px_60px_rgba(0,0,0,0.32)] backdrop-blur-xl ${className}`}>
     <div className="flex items-end justify-between gap-4 border-b border-white/5 px-5 py-4 md:px-6">
@@ -193,11 +301,15 @@ const MovieDetails = () => {
   const [reviewRating, setReviewRating] = useState('');
   const [reviewSaving, setReviewSaving] = useState(false);
   const [profileName, setProfileName] = useState('');
+  const [playAvailable, setPlayAvailable] = useState(null);
+  const [seriesSeasons, setSeriesSeasons] = useState({});
+  const [seriesLoadingSeasons, setSeriesLoadingSeasons] = useState(new Set());
+  const [selectedSeason, setSelectedSeason] = useState(1);
   const { id } = useParams();
 
   const posterSrc = normalizePosterUrl(movie?.Poster);
   const backdropSrc = normalizePosterUrl(movie?.Poster || FALLBACK_BACKDROP);
-  const playUrl = movie ? `https://www.playimdb.com/title/${movie.imdbID}/` : '';
+  const playUrl = movie ? getPlayImdbUrl(movie.imdbID) : '';
 
   const genres = useMemo(() => splitList(movie?.Genre), [movie?.Genre]);
   const castMembers = useMemo(() => splitList(movie?.Actors), [movie?.Actors]);
@@ -496,6 +608,72 @@ const MovieDetails = () => {
     };
   }, [movie, user, genres, titleKeywords, yearNumber]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkPlayAvailability = async () => {
+      if (!movie?.imdbID) {
+        setPlayAvailable(null);
+        return;
+      }
+
+      setPlayAvailable(null);
+      const availability = await probePlayImdbAvailability(movie.imdbID);
+      if (isMounted) {
+        setPlayAvailable(availability);
+      }
+    };
+
+    checkPlayAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [movie?.imdbID]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSeriesSeasonOne = async () => {
+      if (!movie?.imdbID || movie.Type !== 'series') {
+        setSeriesSeasons({});
+        setSelectedSeason(1);
+        return;
+      }
+
+      const seasonNumber = 1;
+      if (!seriesSeasons[seasonNumber]) {
+        setSeriesLoadingSeasons((prev) => new Set([...prev, seasonNumber]));
+        try {
+          const seasonData = await getMovieSeasonData(movie.imdbID, seasonNumber);
+          if (isMounted && seasonData) {
+            setSeriesSeasons((prev) => ({
+              ...prev,
+              [seasonNumber]: seasonData,
+            }));
+            setSelectedSeason(seasonNumber);
+          }
+        } catch (error) {
+          console.error(`Error loading season ${seasonNumber}:`, error);
+        } finally {
+          if (isMounted) {
+            setSeriesLoadingSeasons((prev) => {
+              const next = new Set(prev);
+              next.delete(seasonNumber);
+              return next;
+            });
+          }
+        }
+      }
+    };
+
+    loadSeriesSeasonOne();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [movie?.imdbID, movie?.Type]);
+
   const handleSubmitReview = async () => {
     if (!user || !movie?.imdbID || !reviewText.trim()) return;
 
@@ -531,6 +709,35 @@ const MovieDetails = () => {
       console.error('Failed to save review:', error);
     } finally {
       setReviewSaving(false);
+    }
+  };
+
+  const handleLoadSeason = async (seasonNumber) => {
+    if (!movie?.imdbID || movie.Type !== 'series') return;
+
+    setSelectedSeason(seasonNumber);
+
+    if (seriesSeasons[seasonNumber]) {
+      return;
+    }
+
+    setSeriesLoadingSeasons((prev) => new Set([...prev, seasonNumber]));
+    try {
+      const seasonData = await getMovieSeasonData(movie.imdbID, seasonNumber);
+      if (seasonData) {
+        setSeriesSeasons((prev) => ({
+          ...prev,
+          [seasonNumber]: seasonData,
+        }));
+      }
+    } catch (error) {
+      console.error(`Error loading season ${seasonNumber}:`, error);
+    } finally {
+      setSeriesLoadingSeasons((prev) => {
+        const next = new Set(prev);
+        next.delete(seasonNumber);
+        return next;
+      });
     }
   };
 
@@ -594,18 +801,20 @@ const MovieDetails = () => {
               </div>
 
               <div className="mt-4 flex flex-col gap-3">
-                <a
-                  href={playUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#e50914] px-5 py-3 font-semibold text-white shadow-lg shadow-[#e50914]/20 transition-colors hover:bg-[#c40812]"
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-6.518-3.755A1 1 0 007 8.277v7.446a1 1 0 001.234.97l6.518-1.78A1 1 0 0016 13.97v-1.643a1 1 0 00-.752-1.159z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 4h14v16H5z" />
-                  </svg>
-                  Play
-                </a>
+                {playAvailable !== false && (
+                  <a
+                    href={playUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#e50914] px-5 py-3 font-semibold text-white shadow-lg shadow-[#e50914]/20 transition-colors hover:bg-[#c40812]"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-6.518-3.755A1 1 0 007 8.277v7.446a1 1 0 001.234.97l6.518-1.78A1 1 0 0016 13.97v-1.643a1 1 0 00-.752-1.159z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 4h14v16H5z" />
+                    </svg>
+                    Play
+                  </a>
+                )}
                 <WatchlistButton movie={movie} />
                 <RecommendButton movie={movie} />
               </div>
@@ -786,6 +995,55 @@ const MovieDetails = () => {
                   )}
                 </div>
               </Section>
+
+              {movie?.Type === 'series' && movie?.totalSeasons && (
+                <Section
+                  eyebrow="Series seasons"
+                  title="All seasons"
+                  description={`Browse ${movie.totalSeasons} season${movie.totalSeasons !== 1 ? 's' : ''} of this series. Season 1 is pre-loaded; other seasons load on-demand.`}
+                >
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-sm font-semibold text-white mb-3">Select a season:</p>
+                      <SeasonSelector
+                        totalSeasons={movie.totalSeasons}
+                        selectedSeason={selectedSeason}
+                        onSelectSeason={handleLoadSeason}
+                        loadingSeasons={seriesLoadingSeasons}
+                      />
+                    </div>
+
+                    {seriesSeasons[selectedSeason] && (
+                      <div>
+                        <div className="mb-4">
+                          <p className="text-sm text-white/70">
+                            <span className="font-semibold text-white">Season {selectedSeason}</span> • {seriesSeasons[selectedSeason].Episodes?.length || 0} episodes
+                            {seriesSeasons[selectedSeason].Year && ` • ${seriesSeasons[selectedSeason].Year}`}
+                          </p>
+                        </div>
+                        <EpisodeList
+                          episodes={seriesSeasons[selectedSeason].Episodes}
+                          seasonNumber={selectedSeason}
+                          imdbID={movie.imdbID}
+                        />
+                      </div>
+                    )}
+
+                    {!seriesSeasons[selectedSeason] && !seriesLoadingSeasons.has(selectedSeason) && (
+                      <div className="rounded-2xl border border-white/5 bg-white/5 px-4 py-4 text-sm text-white/70">
+                        Click a season to load its episodes.
+                      </div>
+                    )}
+
+                    {seriesLoadingSeasons.has(selectedSeason) && (
+                      <div className="rounded-2xl border border-white/5 bg-white/5 px-4 py-4 text-sm text-white/70 flex items-center gap-2">
+                        <span className="h-2 w-2 bg-[#e50914] rounded-full animate-pulse" />
+                        Loading season {selectedSeason}...
+                      </div>
+                    )}
+                  </div>
+                </Section>
+              )}
 
               <Section
                 eyebrow="More like this"

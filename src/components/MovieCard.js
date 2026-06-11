@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  getPlayImdbUrl,
+  probePlayImdbAvailability,
+} from '../services/playImdb';
 
 const FALLBACK_POSTER = 'https://via.placeholder.com/300x450?text=No+Poster';
 
@@ -30,11 +34,26 @@ const MovieCard = ({
 }) => {
   const navigate = useNavigate();
   const [showAllRecommenders, setShowAllRecommenders] = useState(false);
+  const [playAvailable, setPlayAvailable] = useState(null);
+  const playAvailabilityRequestedRef = useRef(false);
   const feedBadges = Array.isArray(movie?.feedBadges) ? movie.feedBadges.slice(0, 2) : [];
 
   const posterSrc = normalizePosterUrl(movie?.Poster);
-  const playUrl = `https://www.playimdb.com/title/${movie.imdbID}/`;
+  const playUrl = getPlayImdbUrl(movie?.imdbID);
   const reasonText = typeof movie?.feedReason === 'string' ? movie.feedReason.trim() : '';
+
+  useEffect(() => {
+    playAvailabilityRequestedRef.current = false;
+    setPlayAvailable(null);
+  }, [movie?.imdbID]);
+
+  const ensurePlayAvailability = async () => {
+    if (playAvailabilityRequestedRef.current || !movie?.imdbID) return;
+
+    playAvailabilityRequestedRef.current = true;
+    const availability = await probePlayImdbAvailability(movie.imdbID);
+    setPlayAvailable(availability);
+  };
 
   const renderRecommenders = () => {
     if (!recommendedBy || recommendedBy.length === 0) return null;
@@ -84,6 +103,8 @@ const MovieCard = ({
     return (
       <div
         className="relative flex-shrink-0 w-36 md:w-44 h-52 md:h-64 rounded-2xl overflow-hidden cursor-pointer group border border-white/5 bg-[#1a1a1a] shadow-[0_12px_40px_rgba(0,0,0,0.35)] transition-transform duration-300 hover:-translate-y-1 hover:border-[#e50914]/40"
+        onMouseEnter={ensurePlayAvailability}
+        onFocus={ensurePlayAvailability}
         onClick={() => {
           onOpenDetails?.(movie);
           navigate(`/movie/${movie.imdbID}`);
@@ -134,17 +155,19 @@ const MovieCard = ({
           <p className="text-white text-xs font-semibold line-clamp-2 mb-1">{movie.Title}</p>
           <p className="text-gray-400 text-xs mb-2">{movie.Year}</p>
           {reasonText && <p className="text-[11px] text-gray-300 mb-2 line-clamp-2">{reasonText}</p>}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPlay?.(movie);
-              window.open(playUrl, '_blank', 'noopener,noreferrer');
-            }}
-            className="flex items-center gap-1 bg-[#e50914] text-white text-xs font-bold px-3 py-1.5 rounded-full w-fit hover:bg-[#c40812] transition-colors shadow-lg shadow-[#e50914]/20"
-          >
-            &#9654; Play
-          </button>
+          {playAvailable !== false && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlay?.(movie);
+                window.open(playUrl, '_blank', 'noopener,noreferrer');
+              }}
+              className="flex items-center gap-1 bg-[#e50914] text-white text-xs font-bold px-3 py-1.5 rounded-full w-fit hover:bg-[#c40812] transition-colors shadow-lg shadow-[#e50914]/20"
+            >
+              &#9654; Play
+            </button>
+          )}
         </div>
       </div>
     );
