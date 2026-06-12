@@ -253,16 +253,16 @@ const EpisodeList = ({ episodes, seasonNumber, imdbID }) => {
 };
 
 const Section = ({ eyebrow, title, description, children, className = '' }) => (
-  <section className={`rounded-3xl border border-white/5 bg-[#1a1a1a]/90 shadow-[0_18px_60px_rgba(0,0,0,0.32)] backdrop-blur-xl ${className}`}>
-    <div className="flex items-end justify-between gap-4 border-b border-white/5 px-5 py-4 md:px-6">
+  <section className={`min-w-0 rounded-3xl border border-white/5 bg-[#1a1a1a]/90 shadow-[0_18px_60px_rgba(0,0,0,0.32)] backdrop-blur-xl ${className}`}>
+    <div className="flex items-start justify-between gap-4 border-b border-white/5 px-4 py-4 sm:px-5 md:px-6">
       <div>
         {eyebrow && <p className="text-[11px] uppercase tracking-[0.26em] text-white/45">{eyebrow}</p>}
-        <h2 className="mt-1 text-xl font-black tracking-tight text-white md:text-2xl">{title}</h2>
+        <h2 className="mt-1 text-lg font-black tracking-tight text-white sm:text-xl md:text-2xl">{title}</h2>
         {description && <p className="mt-1 text-sm leading-relaxed text-white/60">{description}</p>}
       </div>
       {children && false}
     </div>
-    <div className="px-5 py-5 md:px-6">{children}</div>
+    <div className="px-4 py-5 sm:px-5 md:px-6">{children}</div>
   </section>
 );
 
@@ -275,7 +275,7 @@ const InfoChip = ({ children, tone = 'default' }) => {
   };
 
   return (
-    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${styles[tone]}`}>
+    <span className={`inline-flex max-w-full items-center rounded-full border px-3 py-1 text-xs font-semibold truncate ${styles[tone]}`}>
       {children}
     </span>
   );
@@ -786,44 +786,74 @@ const MovieDetails = () => {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(229,9,20,0.18),transparent_35%),linear-gradient(to_bottom,rgba(20,20,20,0.12),rgba(20,20,20,0.95)_55%,#141414)]" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 py-6 pb-24 md:px-6 md:py-10 lg:px-8">
+        <div className="relative mx-auto max-w-7xl px-4 py-6 pb-20 md:px-6 md:py-10 md:pb-24 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[minmax(280px,340px)_1fr]">
-            <aside className="self-start lg:sticky lg:top-24">
-              <div className="overflow-hidden rounded-[2rem] border border-white/5 bg-[#1a1a1a] shadow-[0_28px_90px_rgba(0,0,0,0.5)]">
-                <img
-                  src={posterSrc}
-                  alt={movie.Title}
-                  className="aspect-[2/3] w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = FALLBACK_POSTER;
-                  }}
-                />
+            <aside className="lg:self-start lg:sticky lg:top-24">
+              {/* On mobile: poster + title side by side. On lg+: just poster */}
+              <div className="flex items-start gap-4 lg:block">
+                <div className="w-28 shrink-0 overflow-hidden rounded-2xl lg:w-auto lg:rounded-[2rem] border border-white/5 bg-[#1a1a1a] shadow-xl lg:shadow-[0_28px_90px_rgba(0,0,0,0.5)]">
+                  <img
+                    src={posterSrc}
+                    alt={movie.Title}
+                    className="aspect-[2/3] w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = FALLBACK_POSTER;
+                    }}
+                  />
+                </div>
+                {/* Mobile-only: title + chips beside poster */}
+                <div className="flex-1 min-w-0 lg:hidden">
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {infoChips.slice(0, 3).map((chip) => (
+                      <InfoChip key={chip} tone={chip === movie.Rated ? 'accent' : 'default'}>
+                        {chip}
+                      </InfoChip>
+                    ))}
+                    {movie.imdbRating && movie.imdbRating !== 'N/A' && (
+                      <InfoChip tone="success">IMDb {movie.imdbRating}</InfoChip>
+                    )}
+                  </div>
+                  <h1 className="text-lg font-black leading-tight tracking-tight text-white sm:text-xl">
+                    {movie.Title}
+                  </h1>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {genres.map((genre) => (
+                      <InfoChip key={genre} tone="soft">{genre}</InfoChip>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-4 flex flex-col gap-3">
+              {/* Action buttons — row on mobile, column on desktop */}
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-3 lg:flex-col lg:gap-3">
                 {playAvailable !== false && (
                   <a
                     href={playUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#e50914] px-5 py-3 font-semibold text-white shadow-lg shadow-[#e50914]/20 transition-colors hover:bg-[#c40812]"
+                    className="flex-1 lg:flex-none inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-xl bg-[#e50914] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#e50914]/20 transition-colors hover:bg-[#c40812] sm:text-base"
                   >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-6.518-3.755A1 1 0 007 8.277v7.446a1 1 0 001.234.97l6.518-1.78A1 1 0 0016 13.97v-1.643a1 1 0 00-.752-1.159z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 4h14v16H5z" />
                     </svg>
-                    Play
+                    <span className="hidden sm:inline">Play</span>
                   </a>
                 )}
-                <WatchlistButton movie={movie} />
-                <RecommendButton movie={movie} />
+                <div className="flex-1 min-w-0 lg:flex-none">
+                  <WatchlistButton movie={movie} />
+                </div>
+                <div className="flex-1 min-w-0 lg:flex-none">
+                  <RecommendButton movie={movie} />
+                </div>
               </div>
             </aside>
 
             <div className="space-y-6">
-              <section className="rounded-[2rem] border border-white/5 bg-[#1a1a1a]/90 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.4)] backdrop-blur-xl md:p-7">
-                <div className="flex flex-wrap items-center gap-2">
+              <section className="min-w-0 rounded-[2rem] border border-white/5 bg-[#1a1a1a]/90 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.4)] backdrop-blur-xl sm:p-5 md:p-7">
+                {/* Info chips — hidden on mobile (shown in aside hero row) */}
+                <div className="hidden lg:flex flex-wrap items-center gap-2">
                   {infoChips.map((chip) => (
                     <InfoChip key={chip} tone={chip === movie.Rated ? 'accent' : 'default'}>
                       {chip}
@@ -834,13 +864,14 @@ const MovieDetails = () => {
                   )}
                 </div>
 
-                <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-                  <div className="max-w-4xl">
-                    <h1 className="text-3xl font-black leading-tight tracking-tight md:text-5xl lg:text-6xl">
+                <div className="mt-0 lg:mt-5 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="min-w-0 xl:max-w-4xl">
+                    {/* Title — hidden on mobile (shown in aside hero row) */}
+                    <h1 className="hidden lg:block text-2xl font-black leading-tight tracking-tight md:text-4xl lg:text-5xl xl:text-6xl">
                       {movie.Title}
                     </h1>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    {/* Genres — hidden on mobile */}
+                    <div className="hidden lg:flex mt-4 flex-wrap gap-2">
                       {genres.map((genre) => (
                         <InfoChip key={genre} tone="soft">
                           {genre}
@@ -848,25 +879,25 @@ const MovieDetails = () => {
                       ))}
                     </div>
 
-                    <p className="mt-5 max-w-4xl text-base leading-relaxed text-white/78 md:text-lg">
+                    <p className="mt-0 lg:mt-5 text-sm leading-relaxed text-white/78 sm:text-base md:text-lg">
                       {storylineSummary}
                     </p>
 
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="mt-4 grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4">
                       {stats.map((stat) => (
-                        <div key={stat.label} className="rounded-2xl border border-white/5 bg-white/5 p-4">
-                          <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">{stat.label}</p>
-                          <p className="mt-2 text-sm font-semibold text-white">{stat.value}</p>
+                        <div key={stat.label} className="rounded-2xl border border-white/5 bg-white/5 p-3 md:p-4">
+                          <p className="text-[10px] md:text-[11px] uppercase tracking-[0.22em] text-white/45">{stat.label}</p>
+                          <p className="mt-1 md:mt-2 text-xs font-semibold text-white sm:text-sm">{stat.value}</p>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="w-full max-w-md rounded-3xl border border-white/5 bg-black/20 p-4 shadow-inner shadow-black/20">
+                  <div className="w-full min-w-0 xl:max-w-md rounded-3xl border border-white/5 bg-black/20 p-4 shadow-inner shadow-black/20">
                     <p className="text-[11px] uppercase tracking-[0.25em] text-white/45">Primary cast</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {topCast.length > 0 ? topCast.map((member) => (
-                        <span key={member} className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/80">
+                        <span key={member} className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80 sm:text-sm">
                           {member}
                         </span>
                       )) : (
@@ -882,29 +913,29 @@ const MovieDetails = () => {
                 </div>
               </section>
 
-              <div className="grid gap-6 xl:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2">
                 <Section
                   eyebrow="Photos"
                   title="Visual preview"
                   description="OMDB does not provide still galleries, so this strip uses the main poster and related-title posters as a visual proxy."
                 >
-                  <div className="flex gap-3 overflow-x-auto pb-2">
+                  <div className="flex gap-3 overflow-x-auto pb-2 pr-1">
                     {photos.map((photo) => (
                       <div
                         key={photo.id}
-                        className="min-w-[140px] max-w-[140px] overflow-hidden rounded-2xl border border-white/5 bg-white/5"
+                        className="min-w-[128px] max-w-[128px] sm:min-w-[140px] sm:max-w-[140px] overflow-hidden rounded-2xl border border-white/5 bg-white/5"
                       >
                         <img
                           src={photo.src}
                           alt={photo.title}
-                          className="h-[210px] w-full object-cover"
+                          className="h-[192px] w-full object-cover sm:h-[210px]"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = FALLBACK_POSTER;
                           }}
                         />
-                        <div className="p-3">
-                          <p className="text-sm font-semibold text-white line-clamp-2">{photo.title}</p>
+                        <div className="p-2.5 sm:p-3">
+                          <p className="text-xs sm:text-sm font-semibold text-white line-clamp-2">{photo.title}</p>
                           <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/45">{photo.caption}</p>
                         </div>
                       </div>
@@ -932,12 +963,14 @@ const MovieDetails = () => {
                       <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">Top picks / community</p>
                       <div className="mt-3 space-y-3">
                         {communitySignals.length > 0 ? communitySignals.map((signal) => (
-                          <div key={`${signal.groupId}:${signal.id}`} className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-black/20 px-3 py-2">
-                            <div>
+                          <div key={`${signal.groupId}:${signal.id}`} className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-white/5 bg-black/20 px-3 py-2">
+                            <div className="min-w-0">
                               <p className="text-sm font-semibold text-white">{signal.groupName}</p>
                               <p className="text-xs text-white/50">{signal.recommenderCount} recommender{signal.recommenderCount === 1 ? '' : 's'}</p>
                             </div>
-                            <InfoChip tone="accent">Community pick</InfoChip>
+                            <div className="self-start sm:self-auto">
+                              <InfoChip tone="accent">Community pick</InfoChip>
+                            </div>
                           </div>
                         )) : (
                           <div className="text-sm text-white/65">
@@ -976,7 +1009,7 @@ const MovieDetails = () => {
                 title="Featured performers"
                 description="Top cast is shown first, with the remaining list collapsed into a supporting summary."
               >
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                   {topCast.length > 0 ? topCast.map((member, index) => (
                     <div key={member} className="rounded-2xl border border-white/5 bg-white/5 p-4">
                       <div className="flex items-center gap-3">
@@ -1056,7 +1089,7 @@ const MovieDetails = () => {
                     Building related picks...
                   </div>
                 ) : relatedMovies.length > 0 ? (
-                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
                     {relatedMovies.slice(0, 8).map((item) => (
                       <Link
                         key={item.imdbID}
@@ -1075,8 +1108,8 @@ const MovieDetails = () => {
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                         </div>
-                        <div className="p-4">
-                          <p className="line-clamp-2 text-sm font-semibold text-white">{item.Title}</p>
+                        <div className="p-3 sm:p-4">
+                          <p className="line-clamp-2 text-xs sm:text-sm font-semibold text-white">{item.Title}</p>
                           <p className="mt-1 text-xs text-white/55">{item.Year || 'Year not listed'}</p>
                         </div>
                       </Link>
@@ -1089,12 +1122,12 @@ const MovieDetails = () => {
                 )}
               </Section>
 
-              <div className="grid gap-6 xl:grid-cols-3">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {detailBlocks.map((block) => (
                   <Section key={block.label} eyebrow={block.label} title={block.label}>
                     <div className="space-y-3">
                       {block.items.map(([label, value]) => (
-                        <div key={`${block.label}:${label}`} className="flex items-start justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 px-4 py-3">
+                        <div key={`${block.label}:${label}`} className="flex items-start gap-4 rounded-2xl border border-white/5 bg-white/5 px-4 py-3">
                           <div className="min-w-0">
                             <p className="text-[11px] uppercase tracking-[0.2em] text-white/45">{label}</p>
                             <p className="mt-1 text-sm leading-relaxed text-white/80 break-words">{value}</p>
@@ -1111,7 +1144,7 @@ const MovieDetails = () => {
                 title="Community reactions"
                 description="A lightweight Firestore-backed review list for signed-in users. Empty state is supported and non-blocking."
               >
-                <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+                <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
                   <div className="rounded-3xl border border-white/5 bg-black/20 p-4">
                     {user ? (
                       <div className="space-y-4">
@@ -1148,7 +1181,7 @@ const MovieDetails = () => {
                           type="button"
                           onClick={handleSubmitReview}
                           disabled={reviewSaving || !reviewText.trim()}
-                          className="inline-flex items-center justify-center rounded-xl bg-[#e50914] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c40812] disabled:cursor-not-allowed disabled:opacity-50"
+                          className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-[#e50914] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#c40812] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {reviewSaving ? 'Saving...' : 'Post review'}
                         </button>
@@ -1163,12 +1196,12 @@ const MovieDetails = () => {
                   <div className="space-y-3">
                     {reviews.length > 0 ? reviews.map((review) => (
                       <div key={review.id} className="rounded-2xl border border-white/5 bg-white/5 p-4">
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                           <div>
                             <p className="text-sm font-semibold text-white">{review.userName || 'Anonymous'}</p>
                             <p className="text-xs text-white/45">{formatTimestamp(review.createdAt)}</p>
                           </div>
-                          {review.rating ? <InfoChip tone="accent">{review.rating}/10</InfoChip> : null}
+                          {review.rating ? <div className="self-start sm:self-auto"><InfoChip tone="accent">{review.rating}/10</InfoChip></div> : null}
                         </div>
                         <p className="mt-3 text-sm leading-relaxed text-white/78">{review.text}</p>
                       </div>

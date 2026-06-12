@@ -75,12 +75,12 @@ const WatchlistButton = ({ movie }) => {
   return (
     <button
       onClick={handleToggle}
-      className={`px-5 py-3 rounded-xl transition-all duration-300 flex items-center gap-2 border shadow-lg
+      className={`w-full min-w-0 px-4 py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 border shadow-lg text-sm sm:px-5 sm:text-base
         ${isWatched 
           ? 'bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-100 border-emerald-400/20' 
           : 'bg-white/5 hover:bg-white/10 text-white border-white/10'}`}
     >
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         {isWatched ? (
           <path 
             strokeLinecap="round" 
@@ -104,7 +104,7 @@ const WatchlistButton = ({ movie }) => {
           />
         )}
       </svg>
-      {isWatched ? 'Watched' : isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+      <span className="truncate">{isWatched ? 'Watched' : isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}</span>
     </button>
   );
 };

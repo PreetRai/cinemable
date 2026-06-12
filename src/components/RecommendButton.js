@@ -135,30 +135,30 @@ const RecommendButton = ({ movie }) => {
       <>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-[#e50914] text-white px-5 py-3 rounded-xl hover:bg-[#c40812] 
-                     transition-colors duration-300 flex items-center gap-2 shadow-lg shadow-[#e50914]/20"
+          className="w-full min-w-0 bg-[#e50914] text-white px-4 py-3 rounded-xl hover:bg-[#c40812] 
+                     transition-colors duration-300 flex items-center justify-center gap-2 text-sm sm:px-5 sm:text-base shadow-lg shadow-[#e50914]/20"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
               d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
-          Recommend
+          <span className="truncate">Recommend</span>
         </button>
   
         {showModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-            <div className="bg-[#1a1a1a] p-6 md:p-8 rounded-2xl w-full max-w-md border border-white/5 shadow-2xl">
-              <h2 className="text-2xl font-bold mb-6">Manage Recommendations</h2>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-3 sm:px-4">
+            <div className="bg-[#1a1a1a] p-4 sm:p-6 md:p-8 rounded-2xl w-full max-w-md max-h-[88vh] overflow-y-auto border border-white/5 shadow-2xl">
+              <h2 className="text-xl sm:text-2xl font-bold mb-5 sm:mb-6">Manage Recommendations</h2>
               <div className="space-y-4">
                 {recommendedGroups.length > 0 && (
                   <div className="mb-4">
-                    <h3 className="text-lg font-semibold mb-2">Already Recommended to:</h3>
+                    <h3 className="text-base sm:text-lg font-semibold mb-2">Already Recommended to:</h3>
                     {groups.filter(g => recommendedGroups.includes(g.id)).map(group => (
-                      <div key={group.id} className="flex justify-between items-center p-3 bg-white/5 rounded-xl mb-2 border border-white/5">
-                        <span>{group.name}</span>
+                      <div key={group.id} className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center p-3 bg-white/5 rounded-xl mb-2 border border-white/5">
+                        <span className="min-w-0 break-words">{group.name}</span>
                         <button
                           onClick={() => handleRemoveRecommendation(group.id)}
-                          className="text-[#ff9aa0] hover:text-white"
+                          className="self-start sm:self-auto text-[#ff9aa0] hover:text-white"
                         >
                           Remove
                         </button>
@@ -168,7 +168,7 @@ const RecommendButton = ({ movie }) => {
                 )}
   
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Recommend to New Group:</h3>
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">Recommend to New Group:</h3>
                   <select
                     value={selectedGroupId}
                     onChange={(e) => setSelectedGroupId(e.target.value)}
@@ -186,7 +186,7 @@ const RecommendButton = ({ movie }) => {
                   </select>
                 </div>
   
-                <div className="flex gap-4 mt-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 mt-4">
                   <button
                     onClick={handleRecommend}
                     disabled={!selectedGroupId}
