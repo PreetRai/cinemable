@@ -836,7 +836,7 @@ const MovieDetails = () => {
 
                 <div className="mt-5 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
                   <div className="max-w-4xl">
-                    <h1 className="text-4xl font-black leading-tight tracking-tight md:text-6xl">
+                    <h1 className="text-3xl font-black leading-tight tracking-tight md:text-5xl lg:text-6xl">
                       {movie.Title}
                     </h1>
 

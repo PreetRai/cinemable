@@ -110,7 +110,7 @@ const WishlistCard = ({ movie, onUpdate,isWatched }) => {
       </div>
 
       {/* Movie Image */}
-      <div className="relative aspect-[2/3] min-h-[360px]">
+      <div className="relative aspect-[2/3]">
         <img 
           src={movie.poster !== 'N/A' ? movie.poster : 'https://via.placeholder.com/300x450?text=No+Poster'} 
           alt={movie.title} 

@@ -151,7 +151,7 @@ const MovieCard = ({
             e.currentTarget.src = FALLBACK_POSTER;
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
           <p className="text-white text-xs font-semibold line-clamp-2 mb-1">{movie.Title}</p>
           <p className="text-gray-400 text-xs mb-2">{movie.Year}</p>
           {reasonText && <p className="text-[11px] text-gray-300 mb-2 line-clamp-2">{reasonText}</p>}
@@ -182,7 +182,7 @@ const MovieCard = ({
         navigate(`/movie/${movie.imdbID}`);
       }}
     >
-      <div className="relative h-[400px]">
+      <div className="relative aspect-[2/3]">
         <img
           src={posterSrc}
           alt={movie.Title}

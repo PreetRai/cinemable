@@ -200,7 +200,7 @@ const GroupPage = () => {
               </button>
 
               {showUserFilter && (
-                <div className="absolute z-50 mt-2 w-full min-w-64 overflow-hidden rounded-2xl border border-white/5 bg-[#1a1a1a] shadow-2xl">
+                <div className="absolute z-50 mt-2 w-full min-w-48 max-w-[min(16rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/5 bg-[#1a1a1a] shadow-2xl">
                   <div className="p-2">
                     {Object.entries(memberDetails)
                       .filter(([userId]) => 

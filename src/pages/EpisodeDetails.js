@@ -113,10 +113,10 @@ const EpisodeWatchlistButton = ({ episode, series }) => {
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       <button
         onClick={handleToggle}
-        className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+        className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition min-h-[44px] ${
           isInWatchlist
             ? 'bg-[#e50914] text-white hover:bg-[#ffb3b7] hover:text-black'
             : 'border border-[#e50914] text-[#e50914] hover:bg-[#e50914] hover:text-white'
@@ -127,7 +127,7 @@ const EpisodeWatchlistButton = ({ episode, series }) => {
       {isInWatchlist && (
         <button
           onClick={handleToggle}
-          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white/70 transition hover:bg-white/10"
+          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/70 transition hover:bg-white/10 min-h-[44px]"
         >
           ✓ Watched
         </button>
@@ -251,17 +251,17 @@ const EpisodeDetails = () => {
       {/* Breadcrumb Navigation */}
       <div className="border-b border-white/10 bg-black/40">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-2 text-sm text-white/70">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/70">
             <button
               onClick={handleBackToSeries}
-              className="hover:text-white transition"
+              className="hover:text-white transition max-w-[140px] sm:max-w-xs truncate shrink-0"
             >
               {series.Title}
             </button>
             <span>/</span>
-            <span>Season {seasonNum}</span>
+            <span className="shrink-0">Season {seasonNum}</span>
             <span>/</span>
-            <span className="text-white font-semibold">{episode.Title}</span>
+            <span className="text-white font-semibold min-w-0 truncate">{episode.Title}</span>
           </div>
         </div>
       </div>
@@ -372,35 +372,37 @@ const EpisodeDetails = () => {
         </div>
 
         {/* Navigation Buttons */}
-        <div className="mt-12 flex gap-4 border-t border-white/10 pt-8">
-          <button
-            onClick={handlePrevEpisode}
-            disabled={!canGoPrev}
-            className={`flex-1 rounded-lg px-6 py-3 text-center font-semibold transition ${
-              canGoPrev
-                ? 'bg-white/10 text-white hover:bg-white/20'
-                : 'bg-white/5 text-white/40 cursor-not-allowed'
-            }`}
-          >
-            ← Previous Episode
-          </button>
-          <button
-            onClick={handleBackToSeries}
-            className="flex-1 rounded-lg bg-[#e50914] px-6 py-3 text-center font-semibold text-white hover:bg-[#ffb3b7] hover:text-black transition"
-          >
-            Back to Series
-          </button>
-          <button
-            onClick={handleNextEpisode}
-            disabled={!canGoNext}
-            className={`flex-1 rounded-lg px-6 py-3 text-center font-semibold transition ${
-              canGoNext
-                ? 'bg-white/10 text-white hover:bg-white/20'
-                : 'bg-white/5 text-white/40 cursor-not-allowed'
-            }`}
-          >
-            Next Episode →
-          </button>
+        <div className="mt-12 border-t border-white/10 pt-8">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:gap-4">
+            <button
+              onClick={handlePrevEpisode}
+              disabled={!canGoPrev}
+              className={`rounded-lg px-4 py-3 text-center font-semibold transition min-h-[44px] ${
+                canGoPrev
+                  ? 'bg-white/10 text-white hover:bg-white/20'
+                  : 'bg-white/5 text-white/40 cursor-not-allowed'
+              }`}
+            >
+              ← Prev
+            </button>
+            <button
+              onClick={handleNextEpisode}
+              disabled={!canGoNext}
+              className={`rounded-lg px-4 py-3 text-center font-semibold transition min-h-[44px] ${
+                canGoNext
+                  ? 'bg-white/10 text-white hover:bg-white/20'
+                  : 'bg-white/5 text-white/40 cursor-not-allowed'
+              }`}
+            >
+              Next →
+            </button>
+            <button
+              onClick={handleBackToSeries}
+              className="col-span-2 sm:flex-1 rounded-lg bg-[#e50914] px-6 py-3 text-center font-semibold text-white hover:bg-[#ffb3b7] hover:text-black transition min-h-[44px]"
+            >
+              Back to Series
+            </button>
+          </div>
         </div>
       </div>
     </div>

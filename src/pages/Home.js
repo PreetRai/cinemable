@@ -94,14 +94,14 @@ const ShelfRow = ({
       <div className="relative group/shelf">
         <button
           onClick={() => scroll("left")}
-          className="absolute left-0 top-0 bottom-0 z-10 w-10 md:w-14 flex items-center justify-center bg-gradient-to-r from-[#141414] to-transparent opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-200"
+          className="absolute left-0 top-0 bottom-0 z-10 w-10 md:w-14 flex items-center justify-center bg-gradient-to-r from-[#141414] to-transparent opacity-60 md:opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-200"
           aria-label="Scroll left"
         >
           <span className="text-white text-2xl font-bold">&#8249;</span>
         </button>
         <button
           onClick={() => scroll("right")}
-          className="absolute right-0 top-0 bottom-0 z-10 w-10 md:w-14 flex items-center justify-center bg-gradient-to-l from-[#141414] to-transparent opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-200"
+          className="absolute right-0 top-0 bottom-0 z-10 w-10 md:w-14 flex items-center justify-center bg-gradient-to-l from-[#141414] to-transparent opacity-60 md:opacity-0 group-hover/shelf:opacity-100 transition-opacity duration-200"
           aria-label="Scroll right"
         >
           <span className="text-white text-2xl font-bold">&#8250;</span>

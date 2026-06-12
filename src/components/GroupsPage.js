@@ -352,8 +352,8 @@ useEffect(() => {
       </div>
 
       {showJoinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-2xl md:p-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-y-auto max-h-[90vh] rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-2xl md:p-8">
             <h2 className="text-2xl font-bold mb-6">Join Group</h2>
             {joinError && (
               <div className="mb-4 rounded-2xl border border-[#e50914]/30 bg-[#e50914]/10 px-4 py-2 text-[#ffb3b7]">
@@ -375,7 +375,7 @@ useEffect(() => {
               <div className="flex gap-4">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-[#e50914] p-3 font-semibold text-white hover:bg-[#c40812]"
+                  className="flex-1 rounded-xl bg-[#e50914] p-3 font-semibold text-white hover:bg-[#c40812] min-h-[44px]"
                 >
                   Join
                 </button>
@@ -386,7 +386,7 @@ useEffect(() => {
                     setInviteCode('');
                     setJoinError('');
                   }}
-                  className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 font-semibold text-white hover:bg-white/10"
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 font-semibold text-white hover:bg-white/10 min-h-[44px]"
                 >
                   Cancel
                 </button>
@@ -397,8 +397,8 @@ useEffect(() => {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-2xl md:p-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-y-auto max-h-[90vh] rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-2xl md:p-8">
             <h2 className="text-2xl font-bold mb-6">Create New Group</h2>
             <form onSubmit={handleCreateGroup} className="space-y-4">
               <div>
@@ -424,14 +424,14 @@ useEffect(() => {
               <div className="flex gap-4">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-[#e50914] p-3 font-semibold text-white hover:bg-[#c40812]"
+                  className="flex-1 rounded-xl bg-[#e50914] p-3 font-semibold text-white hover:bg-[#c40812] min-h-[44px]"
                 >
                   Create
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 font-semibold text-white hover:bg-white/10"
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 font-semibold text-white hover:bg-white/10 min-h-[44px]"
                 >
                   Cancel
                 </button>
@@ -442,8 +442,8 @@ useEffect(() => {
       )}
 
       {showEditModal && editingGroup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-2xl md:p-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-y-auto max-h-[90vh] rounded-3xl border border-white/5 bg-[#1a1a1a] p-6 shadow-2xl md:p-8">
             <h2 className="text-2xl font-bold mb-6">Edit Group</h2>
             <form onSubmit={handleEditGroup} className="space-y-4">
               <div>
@@ -469,7 +469,7 @@ useEffect(() => {
               <div className="flex gap-4">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-[#e50914] p-3 font-semibold text-white hover:bg-[#c40812]"
+                  className="flex-1 rounded-xl bg-[#e50914] p-3 font-semibold text-white hover:bg-[#c40812] min-h-[44px]"
                 >
                   Save Changes
                 </button>
@@ -479,7 +479,7 @@ useEffect(() => {
                     setShowEditModal(false);
                     setEditingGroup(null);
                   }}
-                  className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 font-semibold text-white hover:bg-white/10"
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 font-semibold text-white hover:bg-white/10 min-h-[44px]"
                 >
                   Cancel
                 </button>
