@@ -5,18 +5,12 @@ import SearchAutocomplete from './SearchAutocomplete';
 
 const Navbar = ({
   searchTerm = '',
-  searchType = 'all',
-  searchFilters = {},
-  searchGenreOptions = [],
   onSearchChange = null,
-  onSearchTypeChange = null,
-  onSearchFilterChange = null,
   onSearchSubmit = null,
   onSearchSelectMovie = null,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const autocompleteRef = useRef(null);
@@ -27,14 +21,7 @@ const Navbar = ({
   }, [user]);
 
   const searchInputId = 'navbar-search-input';
-  const isSearchEnabled = typeof onSearchChange === 'function' && typeof onSearchTypeChange === 'function';
-  const activeFilterCount = useMemo(() => {
-    return [
-      searchFilters?.genre,
-      searchFilters?.yearRange,
-      searchFilters?.languageOrCountry,
-    ].filter((value) => typeof value === 'string' && value.trim()).length;
-  }, [searchFilters]);
+  const isSearchEnabled = typeof onSearchChange === 'function';
 
   const closeMenus = () => {
     setIsOpen(false);
@@ -87,7 +74,7 @@ const Navbar = ({
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#141414]/90 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 py-2 sm:py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="md:hidden">
@@ -191,10 +178,10 @@ const Navbar = ({
             </div>
           </div>
 
-          <div className="mt-2 sm:mt-3 flex flex-col gap-2 sm:gap-3 lg:mt-4 lg:flex-row lg:items-center">
+          <div className="mt-3 flex flex-col gap-3 lg:mt-4 lg:flex-row lg:items-center">
             {isSearchEnabled && (
               <div className="flex-1">
-                <div className="flex flex-row gap-2 items-stretch">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
                   <div className="relative flex-1 min-w-0">
                     <label htmlFor={searchInputId} className="sr-only">
                       Search movies or series
@@ -203,7 +190,7 @@ const Navbar = ({
                       id={searchInputId}
                       type="text"
                       placeholder="Search titles or plot keywords..."
-                      className="w-full rounded-2xl border border-white/10 bg-[#0f0f0f] px-3 py-2 sm:px-4 sm:py-3.5 text-sm sm:text-base text-white shadow-[0_0_22px_rgba(229,9,20,0.12)] outline-none transition placeholder:text-white/35 focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
+                      className="w-full rounded-2xl border border-white/10 bg-[#0f0f0f] px-4 py-3.5 text-base text-white shadow-[0_0_22px_rgba(229,9,20,0.12)] outline-none transition placeholder:text-white/35 focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
                       value={searchTerm}
                       onChange={isSearchEnabled ? onSearchChange : undefined}
                       onKeyDown={handleSearchKeyDown}
@@ -212,121 +199,18 @@ const Navbar = ({
                     <SearchAutocomplete
                       ref={autocompleteRef}
                       searchTerm={searchTerm}
-                      type={searchType}
                       onSelectMovie={onSearchSelectMovie}
                     />
                   </div>
-
-                  <div className="flex gap-2 items-stretch flex-shrink-0">
-                    <div className="w-20 sm:w-40">
-                      <label className="sr-only" htmlFor="navbar-search-type">
-                        Search type
-                      </label>
-                      <select
-                        id="navbar-search-type"
-                        value={searchType}
-                        onChange={(event) => {
-                          if (typeof onSearchTypeChange === 'function') {
-                            onSearchTypeChange(event.target.value);
-                          }
-                        }}
-                        className="w-full rounded-2xl border border-white/10 bg-[#111111] px-2 py-2 sm:px-4 sm:py-3.5 text-sm font-medium text-white outline-none transition focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
-                      >
-                        <option value="all">All</option>
-                        <option value="movie">Movies</option>
-                        <option value="series">Series</option>
-                      </select>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowAdvancedFilters((prev) => !prev)}
-                      className="flex-shrink-0 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 sm:px-4 sm:py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 focus:border-[#e50914]/50 focus:outline-none focus:ring-2 focus:ring-[#e50914]/35"
-                    >
-                      <span className="hidden sm:inline">Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</span>
-                      <span className="sm:hidden" aria-hidden="true">
-                        <svg className="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-                        </svg>
-                        {activeFilterCount > 0 && <span className="ml-1">{activeFilterCount}</span>}
-                      </span>
-                      <span className="sr-only sm:hidden">Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}</span>
-                    </button>
-                  </div>
                 </div>
 
-                {(showAdvancedFilters || activeFilterCount > 0) && (
-                  <div className="grid gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-3 sm:grid-cols-3">
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-white/45" htmlFor="navbar-search-genre">
-                        Genre
-                      </label>
-                      <select
-                        id="navbar-search-genre"
-                        value={searchFilters?.genre || ''}
-                        onChange={(event) => {
-                          if (typeof onSearchFilterChange === 'function') {
-                            onSearchFilterChange('genre', event.target.value);
-                          }
-                        }}
-                        className="w-full rounded-2xl border border-white/10 bg-[#111111] px-4 py-3 text-sm text-white outline-none transition focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
-                      >
-                        <option value="">Any genre</option>
-                        {searchGenreOptions.map((genre) => (
-                          <option key={genre} value={genre}>
-                            {genre}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-white/45" htmlFor="navbar-search-year-range">
-                        Year or range
-                      </label>
-                      <input
-                        id="navbar-search-year-range"
-                        type="text"
-                        value={searchFilters?.yearRange || ''}
-                        onChange={(event) => {
-                          if (typeof onSearchFilterChange === 'function') {
-                            onSearchFilterChange('yearRange', event.target.value);
-                          }
-                        }}
-                        onKeyDown={handleSearchKeyDown}
-                        placeholder="2019 or 2019-2022"
-                        className="w-full rounded-2xl border border-white/10 bg-[#111111] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-white/45" htmlFor="navbar-search-region">
-                        Language or country
-                      </label>
-                      <input
-                        id="navbar-search-region"
-                        type="text"
-                        value={searchFilters?.languageOrCountry || ''}
-                        onChange={(event) => {
-                          if (typeof onSearchFilterChange === 'function') {
-                            onSearchFilterChange('languageOrCountry', event.target.value);
-                          }
-                        }}
-                        onKeyDown={handleSearchKeyDown}
-                        placeholder="English, Korea, Japan"
-                        className="w-full rounded-2xl border border-white/10 bg-[#111111] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <p className="hidden sm:block text-xs text-white/40">
-                  Suggestions stay title-focused. Press Enter to run the richer search with filters and keyword ranking.
+                <p className="text-xs text-white/40">
+                  Suggestions stay title-focused. Press Enter to search by title.
                 </p>
               </div>
             )}
 
-            <div className="hidden md:flex flex-wrap gap-2 text-sm lg:hidden">
+            <div className="flex flex-wrap gap-2 text-sm lg:hidden">
               {ctaLinks.map((link) => (
                 <Link
                   key={link.to}
@@ -421,7 +305,7 @@ const Navbar = ({
         </div>
       </nav>
 
-      <div className="h-[6.5rem] sm:h-32 md:h-36 lg:h-32" />
+      <div className="h-44 md:h-36 lg:h-32" />
 
       <div
         className={`fixed top-0 left-0 h-full w-72 bg-[#141414] transform transition-transform duration-300 ease-in-out z-50 border-r border-white/5 ${

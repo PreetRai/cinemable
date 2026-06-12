@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   arrayRemove,
@@ -13,13 +13,10 @@ import {
   where,
 } from "firebase/firestore";
 import {
-  ADVANCED_SEARCH_GENRES,
   getMovieSummaryById,
   isLikelyContentTitle,
   parseMovieYear,
-  parseSearchYearRange,
   searchMoviesByQueries,
-  searchMoviesWithFilters,
 } from "../services/omdbApi";
 import { db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
@@ -308,6 +305,7 @@ const ORDER_PERSIST_HOURS = 24;
 const MAX_FRANCHISE_ITEMS = 2;
 const HERO_POOL_LIMIT = 10;
 const HERO_ROTATE_INTERVAL_MS = 5000;
+const SEARCH_PAGE_SIZE = 10;
 
 const GENRE_QUERY_MAP = {
   Action: ["action", "adventure", "mission"],
@@ -428,67 +426,6 @@ const uniqueLimit = (items, limit) => {
     if (result.length >= limit) break;
   }
   return result;
-};
-
-const EMPTY_SEARCH_FILTERS = {
-  genre: "",
-  yearRange: "",
-  languageOrCountry: "",
-};
-
-const createSubmittedSearch = (overrides = {}) => ({
-  query: "",
-  type: "all",
-  ...EMPTY_SEARCH_FILTERS,
-  ...overrides,
-});
-
-const hasCommittedSearch = (search) => {
-  if (!search) return false;
-  return Boolean(
-    (typeof search.query === "string" && search.query.trim()) ||
-      search.type === "movie" ||
-      search.type === "series" ||
-      (typeof search.genre === "string" && search.genre.trim()) ||
-      (typeof search.yearRange === "string" && search.yearRange.trim()) ||
-      (typeof search.languageOrCountry === "string" && search.languageOrCountry.trim())
-  );
-};
-
-const flattenSearchSeedMovies = (shelves) => {
-  const deduped = new Map();
-  Object.values(shelves || {}).forEach((items) => {
-    safeArray(items).forEach((movie) => {
-      if (!movie?.imdbID || deduped.has(movie.imdbID)) return;
-      deduped.set(movie.imdbID, movie);
-    });
-  });
-  return Array.from(deduped.values());
-};
-
-const buildSearchChips = (search, yearRange) => {
-  const chips = [];
-
-  if (search?.type && search.type !== "all") {
-    chips.push({
-      key: "type",
-      label: search.type === "series" ? "Series" : "Movies",
-    });
-  }
-
-  if (search?.genre) {
-    chips.push({ key: "genre", label: search.genre });
-  }
-
-  if (yearRange?.raw) {
-    chips.push({ key: "year", label: `Year ${yearRange.raw}` });
-  }
-
-  if (search?.languageOrCountry?.trim()) {
-    chips.push({ key: "region", label: search.languageOrCountry.trim() });
-  }
-
-  return chips;
 };
 
 const formatReasonLabel = (rawValue) => {
@@ -1318,9 +1255,7 @@ const Home = () => {
   const { user } = useAuth();
   const userScopeId = user?.uid || "guest";
   const [draftSearchTerm, setDraftSearchTerm] = useState("");
-  const [draftSearchType, setDraftSearchType] = useState("all");
-  const [draftSearchFilters, setDraftSearchFilters] = useState(EMPTY_SEARCH_FILTERS);
-  const [submittedSearch, setSubmittedSearch] = useState(createSubmittedSearch());
+  const [submittedSearchTerm, setSubmittedSearchTerm] = useState("");
   const [page, setPage] = useState(1);
 
   const [searchMovies, setSearchMovies] = useState([]);
@@ -1341,20 +1276,8 @@ const Home = () => {
   const [engagement, setEngagement] = useState(defaultEngagement(getDayBucket()));
   const [shelfLoading, setShelfLoading] = useState(true);
 
-  const normalizedSubmittedSearchTerm = submittedSearch.query.trim();
-  const submittedYearRange = useMemo(
-    () => parseSearchYearRange(submittedSearch.yearRange),
-    [submittedSearch.yearRange]
-  );
-  const searchSeedMovies = useMemo(
-    () => flattenSearchSeedMovies(sourceShelfData),
-    [sourceShelfData]
-  );
-  const activeSearchChips = useMemo(
-    () => buildSearchChips(submittedSearch, submittedYearRange),
-    [submittedSearch, submittedYearRange]
-  );
-  const isSearchActive = hasCommittedSearch(submittedSearch);
+  const normalizedSubmittedSearchTerm = submittedSearchTerm.trim();
+  const isSearchActive = Boolean(normalizedSubmittedSearchTerm);
 
   useEffect(() => {
     const dayBucket = getDayBucket();
@@ -1519,33 +1442,17 @@ const Home = () => {
       return;
     }
 
-    if (!submittedYearRange.isValid) {
-      setSearchMovies([]);
-      setSearchTotal(0);
-      setSearchError("Enter a year like 2019 or 2019-2022.");
-      return;
-    }
-
     const fetchSearch = async () => {
       setSearchLoading(true);
       setSearchError(null);
       try {
-        const result = await searchMoviesWithFilters(submittedSearch, {
-          page,
-          seedMovies: searchSeedMovies,
+        const result = await searchMoviesByQueries([normalizedSubmittedSearchTerm], {
+          pages: page,
         });
-
-        if (result.Response === "True") {
-          setSearchMovies((prev) =>
-            page === 1 ? result.Search : [...prev, ...result.Search]
-          );
-          setSearchTotal(parseInt(result.totalResults, 10) || 0);
-        } else {
-          if (result.Error) setSearchError(result.Error);
-          if (page === 1) {
-            setSearchMovies([]);
-            setSearchTotal(0);
-          }
+        setSearchMovies(result);
+        setSearchTotal(result.length);
+        if (result.length === 0 && page === 1) {
+          setSearchError("No matching titles were found.");
         }
       } catch {
         setSearchError("Failed to fetch movies");
@@ -1554,7 +1461,7 @@ const Home = () => {
     };
     const id = setTimeout(fetchSearch, 300);
     return () => clearTimeout(id);
-  }, [isSearchActive, page, searchSeedMovies, submittedSearch, submittedYearRange]);
+  }, [isSearchActive, normalizedSubmittedSearchTerm, page]);
 
   const recordEngagement = (eventType, shelfKey, movie) => {
     const dayBucket = getDayBucket();
@@ -1606,26 +1513,10 @@ const Home = () => {
 
   const handleSearchSubmit = (value) => {
     const nextDraftSearchTerm = typeof value === "string" ? value : draftSearchTerm;
+    const trimmed = typeof nextDraftSearchTerm === "string" ? nextDraftSearchTerm.trim() : "";
     setDraftSearchTerm(nextDraftSearchTerm);
-    setSubmittedSearch(
-      createSubmittedSearch({
-        query: typeof nextDraftSearchTerm === "string" ? nextDraftSearchTerm.trim() : "",
-        type: draftSearchType,
-        ...draftSearchFilters,
-      })
-    );
+    setSubmittedSearchTerm(trimmed);
     setPage(1);
-  };
-
-  const handleSearchTypeChange = (value) => {
-    setDraftSearchType(value);
-  };
-
-  const handleSearchFilterChange = (key, value) => {
-    setDraftSearchFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
   };
 
   const handleSelectMovie = (movie) => {
@@ -1659,13 +1550,8 @@ const Home = () => {
     <div className="min-h-screen bg-[#141414] text-white">
       <Navbar
         searchTerm={draftSearchTerm}
-        searchType={draftSearchType}
-        searchFilters={draftSearchFilters}
-        searchGenreOptions={ADVANCED_SEARCH_GENRES}
         onSearchChange={handleSearchChange}
         onSearchSubmit={handleSearchSubmit}
-        onSearchTypeChange={handleSearchTypeChange}
-        onSearchFilterChange={handleSearchFilterChange}
         onSearchSelectMovie={handleSelectMovie}
       />
 
@@ -1738,28 +1624,15 @@ const Home = () => {
                 <h2 className="mt-1 text-2xl font-semibold text-white">
                   {normalizedSubmittedSearchTerm
                     ? `Results for "${normalizedSubmittedSearchTerm}"`
-                    : "Filtered recommendations"}
+                    : "Title search"}
                 </h2>
               </div>
               <p className="text-sm text-white/55">
                 {searchTotal > 0
-                  ? `${searchTotal} ranked match${searchTotal === 1 ? "" : "es"}`
-                  : "Ranking results with OMDb metadata"}
+                  ? `${searchTotal} result${searchTotal === 1 ? "" : "s"}`
+                  : "Searching OMDb titles"}
               </p>
             </div>
-
-            {activeSearchChips.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {activeSearchChips.map((chip) => (
-                  <span
-                    key={chip.key}
-                    className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs font-medium text-white/75"
-                  >
-                    {chip.label}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           {searchError && (
@@ -1782,7 +1655,7 @@ const Home = () => {
             </div>
           )}
 
-          {searchMovies.length > 0 && searchMovies.length < searchTotal && (
+          {searchMovies.length > 0 && searchMovies.length >= page * SEARCH_PAGE_SIZE && (
             <div className="text-center mt-8">
               <button
                 onClick={() => setPage((p) => p + 1)}
