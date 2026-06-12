@@ -5,18 +5,12 @@ import SearchAutocomplete from './SearchAutocomplete';
 
 const Navbar = ({
   searchTerm = '',
-  searchType = 'all',
-  searchFilters = {},
-  searchGenreOptions = [],
   onSearchChange = null,
-  onSearchTypeChange = null,
-  onSearchFilterChange = null,
   onSearchSubmit = null,
   onSearchSelectMovie = null,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const autocompleteRef = useRef(null);
@@ -27,14 +21,7 @@ const Navbar = ({
   }, [user]);
 
   const searchInputId = 'navbar-search-input';
-  const isSearchEnabled = typeof onSearchChange === 'function' && typeof onSearchTypeChange === 'function';
-  const activeFilterCount = useMemo(() => {
-    return [
-      searchFilters?.genre,
-      searchFilters?.yearRange,
-      searchFilters?.languageOrCountry,
-    ].filter((value) => typeof value === 'string' && value.trim()).length;
-  }, [searchFilters]);
+  const isSearchEnabled = typeof onSearchChange === 'function';
 
   const closeMenus = () => {
     setIsOpen(false);
@@ -212,109 +199,13 @@ const Navbar = ({
                     <SearchAutocomplete
                       ref={autocompleteRef}
                       searchTerm={searchTerm}
-                      type={searchType}
                       onSelectMovie={onSearchSelectMovie}
                     />
                   </div>
-
-                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,10rem)_minmax(0,9rem)] sm:items-stretch">
-                    <div className="sm:w-40">
-                      <label className="sr-only" htmlFor="navbar-search-type">
-                        Search type
-                      </label>
-                      <select
-                        id="navbar-search-type"
-                        value={searchType}
-                        onChange={(event) => {
-                          if (typeof onSearchTypeChange === 'function') {
-                            onSearchTypeChange(event.target.value);
-                          }
-                        }}
-                        className="w-full rounded-2xl border border-white/10 bg-[#111111] px-4 py-3.5 text-sm font-medium text-white outline-none transition focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
-                      >
-                        <option value="all">All</option>
-                        <option value="movie">Movies</option>
-                        <option value="series">Series</option>
-                      </select>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowAdvancedFilters((prev) => !prev)}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/10 focus:border-[#e50914]/50 focus:outline-none focus:ring-2 focus:ring-[#e50914]/35"
-                    >
-                      Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-                    </button>
-                  </div>
                 </div>
 
-                {(showAdvancedFilters || activeFilterCount > 0) && (
-                  <div className="grid gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-3 sm:grid-cols-3">
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-white/45" htmlFor="navbar-search-genre">
-                        Genre
-                      </label>
-                      <select
-                        id="navbar-search-genre"
-                        value={searchFilters?.genre || ''}
-                        onChange={(event) => {
-                          if (typeof onSearchFilterChange === 'function') {
-                            onSearchFilterChange('genre', event.target.value);
-                          }
-                        }}
-                        className="w-full rounded-2xl border border-white/10 bg-[#111111] px-4 py-3 text-sm text-white outline-none transition focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
-                      >
-                        <option value="">Any genre</option>
-                        {searchGenreOptions.map((genre) => (
-                          <option key={genre} value={genre}>
-                            {genre}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-white/45" htmlFor="navbar-search-year-range">
-                        Year or range
-                      </label>
-                      <input
-                        id="navbar-search-year-range"
-                        type="text"
-                        value={searchFilters?.yearRange || ''}
-                        onChange={(event) => {
-                          if (typeof onSearchFilterChange === 'function') {
-                            onSearchFilterChange('yearRange', event.target.value);
-                          }
-                        }}
-                        onKeyDown={handleSearchKeyDown}
-                        placeholder="2019 or 2019-2022"
-                        className="w-full rounded-2xl border border-white/10 bg-[#111111] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-white/45" htmlFor="navbar-search-region">
-                        Language or country
-                      </label>
-                      <input
-                        id="navbar-search-region"
-                        type="text"
-                        value={searchFilters?.languageOrCountry || ''}
-                        onChange={(event) => {
-                          if (typeof onSearchFilterChange === 'function') {
-                            onSearchFilterChange('languageOrCountry', event.target.value);
-                          }
-                        }}
-                        onKeyDown={handleSearchKeyDown}
-                        placeholder="English, Korea, Japan"
-                        className="w-full rounded-2xl border border-white/10 bg-[#111111] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/35 focus:border-[#e50914]/50 focus:ring-2 focus:ring-[#e50914]/35"
-                      />
-                    </div>
-                  </div>
-                )}
-
                 <p className="text-xs text-white/40">
-                  Suggestions stay title-focused. Press Enter to run the richer search with filters and keyword ranking.
+                  Suggestions stay title-focused. Press Enter to search by title.
                 </p>
               </div>
             )}

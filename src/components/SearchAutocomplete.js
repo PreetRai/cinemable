@@ -3,7 +3,7 @@ import { searchMultipleMovies } from '../services/omdbApi';
 
 const MIN_AUTOCOMPLETE_CHARS = 3;
 
-const SearchAutocomplete = forwardRef(({ searchTerm, onSelectMovie, type }, ref) => {
+const SearchAutocomplete = forwardRef(({ searchTerm, onSelectMovie }, ref) => {
   const [suggestions, setSuggestions] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -22,10 +22,7 @@ const SearchAutocomplete = forwardRef(({ searchTerm, onSelectMovie, type }, ref)
 
     setIsSearching(true);
     try {
-      const result = await searchMultipleMovies(normalizedTerm, {
-        type: type && type !== 'all' ? type : undefined,
-        page: 1,
-      });
+      const result = await searchMultipleMovies(normalizedTerm, { page: 1 });
       if (result.Response === 'True') {
         setSuggestions(result.Search.slice(0, 8));
         setIsOpen(true);
@@ -38,7 +35,7 @@ const SearchAutocomplete = forwardRef(({ searchTerm, onSelectMovie, type }, ref)
       setIsOpen(false);
     }
     setIsSearching(false);
-  }, [type]);
+  }, []);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
