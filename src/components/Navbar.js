@@ -210,7 +210,7 @@ const Navbar = ({
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2 text-sm lg:hidden">
+            <div className="hidden flex-wrap gap-2 text-sm md:flex lg:hidden">
               {ctaLinks.map((link) => (
                 <Link
                   key={link.to}
